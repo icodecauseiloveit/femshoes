@@ -5,6 +5,8 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined;
 
 const nextConfig: NextConfig = {
+  // Genera un servidor autónomo para Docker (Dokploy)
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   images: {
