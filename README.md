@@ -38,8 +38,17 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 
 ## Usuarios y roles del panel
 
-- **Superadmin:** gestiona productos y usuarios. En `/admin → Usuarios` crea cuentas con correo y contraseña inicial, cambia roles y quita accesos.
-- **Administrador:** solo gestiona productos.
+- **Superadmin:** gestiona productos, pedidos y usuarios. En `/admin → Usuarios` crea cuentas con correo y contraseña inicial, cambia roles y quita accesos.
+- **Administrador:** gestiona productos y pedidos.
+- **Distribuidor:** ve los pedidos **por despachar** (confirmados) y los **despachados**, con foto, modelo, talla, color y cantidad, sin precios ni datos de la clienta. Descarga el PDF y marca los pedidos como despachados.
+
+## Pedidos
+
+- Cuando la clienta toca "Enviar pedido por WhatsApp", el pedido se guarda en la tabla `orders` con un número (`FS-0001`) que va en el mensaje. Nombres, precios y existencias se toman de la base de datos.
+- Estados: Pendiente → Confirmado → Despachado (o Cancelado). Superadmin y administrador cambian cualquier estado; el distribuidor solo pasa de Confirmado a Despachado.
+- **Inventario:** al confirmar, los pares se descuentan del stock. Si se cancela o vuelve a Pendiente, se devuelven. Si no hay existencias suficientes, no deja confirmar. Lo hace la función `set_order_status` de Postgres en una sola transacción.
+- La tabla `orders` no tiene políticas públicas: todo se lee y escribe desde el servidor, que filtra la información según el rol.
+- Base de datos: ejecuta `supabase/migrations/003_pedidos.sql`.
 - Los usuarios se crean en el servidor con la llave de servicio, así que la tienda necesita la variable `SUPABASE_SERVICE_ROLE_KEY` en tiempo de ejecución. No lleva el prefijo `NEXT_PUBLIC` y nunca llega al navegador.
 - Siempre debe quedar al menos un superadmin, y nadie puede quitarse su propio rol ni eliminar su propia cuenta.
 - Base de datos: después de `schema.sql`, ejecuta `supabase/migrations/002_roles.sql`.

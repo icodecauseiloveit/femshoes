@@ -9,7 +9,8 @@ import { sampleProducts } from "@/lib/sample-products";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { fromRow, totalStock, type Product, type ProductRow } from "@/lib/types";
 import { ProductImage } from "../product-image";
-import { isRole, roleLabel, type Role } from "@/lib/roles";
+import { isRole, permissions, roleLabel, type Role } from "@/lib/roles";
+import { OrdersPanel } from "./orders-panel";
 import { ProductForm } from "./product-form";
 import { StaffPanel } from "./staff-panel";
 
@@ -110,7 +111,7 @@ function Dashboard({ email }: { email: string }) {
   const supabase = getSupabase()!;
   const myEmail = email.toLowerCase();
   const [role, setRole] = useState<Role | null | undefined>(undefined);
-  const [tab, setTab] = useState<"productos" | "usuarios">("productos");
+  const [tab, setTab] = useState<Tab | null>(null);
 
   useEffect(() => {
     supabase
@@ -146,26 +147,38 @@ function Dashboard({ email }: { email: string }) {
     );
   }
 
+  const tabs = allTabs.filter((t) => permissions[t.perm](role));
+  const current = tabs.find((t) => t.id === tab) ?? tabs[0];
+
   return (
     <div className="space-y-5">
       {header}
-      {role === "superadmin" && (
+      {tabs.length > 1 && (
         <div className="flex border-b border-line">
-          {(["productos", "usuarios"] as const).map((t) => (
+          {tabs.map((t) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`eyebrow -mb-px border-b-2 px-4 py-3 text-[0.68rem] ${tab === t ? "border-ink text-ink" : "border-transparent text-muted"}`}
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`eyebrow -mb-px border-b-2 px-4 py-3 text-[0.68rem] ${current.id === t.id ? "border-ink text-ink" : "border-transparent text-muted"}`}
             >
-              {t === "productos" ? "Productos" : "Usuarios"}
+              {t.label}
             </button>
           ))}
         </div>
       )}
-      {role === "superadmin" && tab === "usuarios" ? <StaffPanel myEmail={myEmail} /> : <ProductsPanel />}
+      {current.id === "productos" && <ProductsPanel />}
+      {current.id === "pedidos" && <OrdersPanel role={role} />}
+      {current.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
     </div>
   );
 }
+
+type Tab = "productos" | "pedidos" | "usuarios";
+const allTabs: { id: Tab; label: string; perm: keyof typeof permissions }[] = [
+  { id: "productos", label: "Productos", perm: "products" },
+  { id: "pedidos", label: "Pedidos", perm: "orders" },
+  { id: "usuarios", label: "Usuarios", perm: "users" },
+];
 
 function ProductsPanel() {
   const supabase = getSupabase()!;

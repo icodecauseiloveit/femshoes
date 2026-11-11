@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { store } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
+import { createOrder } from "@/app/actions";
+import { orderCode } from "@/lib/orders";
 import { buildOrderMessage, whatsappUrl, type CustomerData } from "@/lib/whatsapp";
 import { CartLine } from "./cart-drawer";
 import { useCart } from "./cart-provider";
@@ -25,6 +27,9 @@ export function Checkout() {
   const { items, subtotal, ready, clear } = useCart();
   const [customer, setCustomer] = useState<CustomerData>(empty);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sentCode, setSentCode] = useState("");
+  const [issues, setIssues] = useState<string[]>([]);
 
   // Recordar los datos de la clienta en este teléfono
   useEffect(() => {
@@ -39,14 +44,35 @@ export function Checkout() {
     setCustomer((c) => ({ ...c, [key]: value }));
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (sending) return;
     try {
       const { notes: _notes, ...keep } = customer;
       localStorage.setItem(CUSTOMER_KEY, JSON.stringify(keep));
     } catch {}
-    const url = whatsappUrl(buildOrderMessage(items, customer));
-    window.open(url, "_blank", "noopener");
+
+    setSending(true);
+    setIssues([]);
+    // Se abre la pestaña de inmediato (con el toque) para que el navegador no la bloquee
+    const tab = window.open("", "_blank");
+
+    const res = await createOrder({
+      items: items.map((i) => ({ productId: i.productId, size: i.size, qty: i.qty })),
+      customer,
+    });
+    setSending(false);
+
+    if (!res.ok && res.error !== "not-configured" && res.issues) {
+      tab?.close();
+      setIssues(res.issues);
+      return;
+    }
+    const code = res.ok ? orderCode(res.number) : undefined;
+    const url = whatsappUrl(buildOrderMessage(items, customer, code));
+    if (tab) tab.location.href = url;
+    else window.location.href = url;
+    setSentCode(code ?? "");
     setSent(true);
     window.scrollTo({ top: 0 });
   }
@@ -58,12 +84,13 @@ export function Checkout() {
       <div className="mx-auto max-w-md px-5 py-20 text-center">
         <p className="eyebrow text-gold">¡Gracias!</p>
         <h1 className="mt-3 text-4xl">Tu pedido va en camino a WhatsApp</h1>
+        {sentCode && <p className="mt-3 text-sm">Número de pedido: <strong className="font-medium">{sentCode}</strong></p>}
         <p className="mt-4 text-sm leading-relaxed text-ink-soft">
           Envía el mensaje que se abrió en WhatsApp y te confirmaremos disponibilidad, costo de envío y datos de pago.
           Si no se abrió, toca el botón de abajo.
         </p>
         <a
-          href={whatsappUrl(buildOrderMessage(items, customer))}
+          href={whatsappUrl(buildOrderMessage(items, customer, sentCode || undefined))}
           target="_blank"
           rel="noopener"
           className="btn mt-7 w-full bg-[#25D366] text-white"
@@ -159,8 +186,18 @@ export function Checkout() {
             </div>
           </dl>
         </div>
-        <button form="checkout" type="submit" className="btn mt-4 w-full bg-[#25D366] text-white hover:opacity-90">
-          <WhatsAppIcon width={18} height={18} /> Enviar pedido por WhatsApp
+        {issues.length > 0 && (
+          <div className="mt-4 border border-sale/40 bg-sale/5 p-3 text-sm text-sale">
+            <p className="font-medium">Revisa tu bolsa:</p>
+            <ul className="mt-1 list-disc pl-5">
+              {issues.map((i) => (
+                <li key={i}>{i}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <button form="checkout" type="submit" disabled={sending} className="btn mt-4 w-full bg-[#25D366] text-white hover:opacity-90">
+          <WhatsAppIcon width={18} height={18} /> {sending ? "Registrando pedido…" : "Enviar pedido por WhatsApp"}
         </button>
         <p className="mt-3 text-center text-xs text-muted">
           No se realiza ningún cobro aquí. Confirmamos tu pedido por WhatsApp.

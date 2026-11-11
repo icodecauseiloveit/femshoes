@@ -2,36 +2,17 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isRole, type Role, type StaffMember } from "@/lib/roles";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
-
-type Result<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
-
-class ActionError extends Error {}
+import { ActionError, requireRole, run, type Result } from "@/lib/staff-auth";
 
 /** Verifica la sesión y que quien llama sea superadmin. */
 async function requireSuperadmin(accessToken: string) {
-  const admin = getSupabaseAdmin();
-  if (!admin) {
-    throw new ActionError("Falta configurar SUPABASE_SERVICE_ROLE_KEY en el servidor.");
-  }
-  const { data, error } = await admin.auth.getUser(accessToken);
-  const email = data.user?.email?.toLowerCase();
-  if (error || !email) throw new ActionError("Tu sesión expiró. Vuelve a iniciar sesión.");
-
-  const { data: row } = await admin.from("admins").select("role").eq("email", email).maybeSingle();
-  if (row?.role !== "superadmin") {
-    throw new ActionError("Solo un superadmin puede gestionar usuarios.");
-  }
-  return { admin, myEmail: email };
-}
-
-async function run<T>(fn: () => Promise<T>): Promise<Result<T>> {
   try {
-    return { ok: true, data: await fn() };
+    return await requireRole(accessToken, ["superadmin"]);
   } catch (e) {
-    if (e instanceof ActionError) return { ok: false, error: e.message };
-    console.error("Error en acción de usuarios:", e);
-    return { ok: false, error: "Ocurrió un error inesperado. Intenta de nuevo." };
+    if (e instanceof ActionError && e.message.startsWith("No tienes permiso")) {
+      throw new ActionError("Solo un superadmin puede gestionar usuarios.");
+    }
+    throw e;
   }
 }
 

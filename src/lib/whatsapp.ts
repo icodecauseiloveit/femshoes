@@ -13,12 +13,12 @@ export type CustomerData = {
 };
 
 /** Construye el mensaje de pedido que se envía por WhatsApp. */
-export function buildOrderMessage(items: CartItem[], customer: CustomerData) {
+export function buildOrderMessage(items: CartItem[], customer: CustomerData, orderCode?: string) {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const freeShipping = store.freeShippingFrom > 0 && subtotal >= store.freeShippingFrom;
 
   const lines = [
-    `Hola ${store.name}, quiero hacer este pedido:`,
+    `Hola ${store.name}, quiero hacer este pedido${orderCode ? ` (${orderCode})` : ""}:`,
     "",
     ...items.map(
       (i, n) =>
