@@ -36,6 +36,13 @@ La paleta de colores y las tipografías están en `src/app/globals.css`.
 
 Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muestra los que cargues.
 
+## Despliegue actual (Dokploy)
+
+- **Tienda:** https://femshoes.miguiafinanciero.com — servicio `tienda` en el proyecto `femshoes` de Dokploy. Usa el `Dockerfile` y se vuelve a desplegar sola con cada push a `main`.
+- **Supabase (autoalojado):** https://supabase.miguiafinanciero.com — servicio `pre0.22.5-supabase` (plantilla de Dokploy). El usuario y la contraseña de Studio están en sus variables de entorno (`DASHBOARD_USERNAME` y `DASHBOARD_PASSWORD`).
+- En Dokploy, `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` se configuran como **Build-time Arguments**, porque quedan fijadas al compilar.
+- Postgres no se publica en el servidor: el puerto 5432 del pooler está cerrado. Para ejecutar SQL usa el editor de Studio.
+
 ## Publicar en Vercel
 
 1. Importa este repositorio en [vercel.com](https://vercel.com/new).
