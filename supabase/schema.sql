@@ -30,7 +30,9 @@ drop trigger if exists products_touch on public.products;
 create trigger products_touch before update on public.products
   for each row execute function public.touch_updated_at();
 
--- 2) Administradoras: solo estos correos pueden editar el catálogo
+-- 2) Equipo: solo estos correos pueden entrar a /admin
+--    role: 'superadmin' (productos + usuarios) o 'admin' (solo productos)
+--    Después de este archivo ejecuta también migrations/002_roles.sql
 create table if not exists public.admins (
   email text primary key
 );

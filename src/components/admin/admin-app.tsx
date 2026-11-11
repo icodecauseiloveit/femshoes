@@ -9,7 +9,9 @@ import { sampleProducts } from "@/lib/sample-products";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { fromRow, totalStock, type Product, type ProductRow } from "@/lib/types";
 import { ProductImage } from "../product-image";
+import { isRole, roleLabel, type Role } from "@/lib/roles";
 import { ProductForm } from "./product-form";
+import { StaffPanel } from "./staff-panel";
 
 export function AdminApp() {
   const supabase = getSupabase();
@@ -106,6 +108,67 @@ function Login() {
 
 function Dashboard({ email }: { email: string }) {
   const supabase = getSupabase()!;
+  const myEmail = email.toLowerCase();
+  const [role, setRole] = useState<Role | null | undefined>(undefined);
+  const [tab, setTab] = useState<"productos" | "usuarios">("productos");
+
+  useEffect(() => {
+    supabase
+      .from("admins")
+      .select("role")
+      .eq("email", myEmail)
+      .maybeSingle()
+      .then(({ data }) => setRole(data && isRole(data.role) ? data.role : null));
+  }, [supabase, myEmail]);
+
+  const header = (
+    <div className="flex items-center justify-between text-xs text-muted">
+      <span>
+        {email}
+        {role && ` · ${roleLabel(role)}`}
+      </span>
+      <button onClick={() => supabase.auth.signOut()} className="underline underline-offset-4">
+        Cerrar sesión
+      </button>
+    </div>
+  );
+
+  if (role === undefined) return <p className="py-20 text-center text-sm text-muted">Cargando…</p>;
+
+  if (role === null) {
+    return (
+      <div className="space-y-5">
+        {header}
+        <p className="border border-sale/40 bg-sale/5 p-4 text-sm text-sale">
+          Tu cuenta no tiene acceso al panel. Pide a un superadmin que te agregue.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {header}
+      {role === "superadmin" && (
+        <div className="flex border-b border-line">
+          {(["productos", "usuarios"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`eyebrow -mb-px border-b-2 px-4 py-3 text-[0.68rem] ${tab === t ? "border-ink text-ink" : "border-transparent text-muted"}`}
+            >
+              {t === "productos" ? "Productos" : "Usuarios"}
+            </button>
+          ))}
+        </div>
+      )}
+      {role === "superadmin" && tab === "usuarios" ? <StaffPanel myEmail={myEmail} /> : <ProductsPanel />}
+    </div>
+  );
+}
+
+function ProductsPanel() {
+  const supabase = getSupabase()!;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -154,12 +217,6 @@ function Dashboard({ email }: { email: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between text-xs text-muted">
-        <span>{email}</span>
-        <button onClick={() => supabase.auth.signOut()} className="underline underline-offset-4">
-          Cerrar sesión
-        </button>
-      </div>
       {error && (
         <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">
           {error}. Verifica que ejecutaste <code>supabase/schema.sql</code> y que tu correo está en la tabla admins.

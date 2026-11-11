@@ -36,6 +36,14 @@ La paleta de colores y las tipografías están en `src/app/globals.css`.
 
 Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muestra los que cargues.
 
+## Usuarios y roles del panel
+
+- **Superadmin:** gestiona productos y usuarios. En `/admin → Usuarios` crea cuentas con correo y contraseña inicial, cambia roles y quita accesos.
+- **Administrador:** solo gestiona productos.
+- Los usuarios se crean en el servidor con la llave de servicio, así que la tienda necesita la variable `SUPABASE_SERVICE_ROLE_KEY` en tiempo de ejecución. No lleva el prefijo `NEXT_PUBLIC` y nunca llega al navegador.
+- Siempre debe quedar al menos un superadmin, y nadie puede quitarse su propio rol ni eliminar su propia cuenta.
+- Base de datos: después de `schema.sql`, ejecuta `supabase/migrations/002_roles.sql`.
+
 ## Despliegue actual (Dokploy)
 
 - **Tienda:** https://femshoes.miguiafinanciero.com — servicio `tienda` en el proyecto `femshoes` de Dokploy. Usa el `Dockerfile` y se vuelve a desplegar sola con cada push a `main`.
