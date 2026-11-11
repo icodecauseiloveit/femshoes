@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #141210;
+  --color-ink-soft: #3d3833;
+  --color-muted: #8a817a;
+  --color-ivory: #faf7f2;
+  --color-sand: #f1e9df;
+  --color-line: #e6ddd2;
+  --color-nude: #d9b9a0;
+  --color-nude-dark: #b8927a;
+  --color-gold: #a8834f;
+  --color-sale: #9b3b2f;
+
+  --font-sans: "Jost Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+
+  --animate-fade-up: fade-up 0.6s ease-out both;
+  --animate-slide-in: slide-in 0.3s ease-out both;
+  --animate-slide-in-left: slide-in-left 0.3s ease-out both;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 350;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  input, select, textarea {
+    font-size: 16px; /* evita el zoom automático en iPhone */
+  }
+}
+
+@utility eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 450;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0 1.25rem;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 450;
+  transition: background-color 0.2s, color 0.2s, opacity 0.2s;
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+@utility field {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  background: white;
+  padding: 0.75rem 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  &:focus { border-color: var(--color-ink); }
+}

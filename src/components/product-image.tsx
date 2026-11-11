@@ -1,0 +1,29 @@
+import Image from "next/image";
+
+type Props = {
+  src?: string;
+  alt: string;
+  sizes?: string;
+  priority?: boolean;
+  className?: string;
+};
+
+/** Imagen de producto en proporción 4:5. Las ilustraciones SVG de ejemplo no se optimizan. */
+export function ProductImage({ src, alt, sizes = "50vw", priority, className = "" }: Props) {
+  if (!src) {
+    return <div className={`aspect-[4/5] w-full bg-sand ${className}`} aria-label={alt} />;
+  }
+  return (
+    <div className={`relative aspect-[4/5] w-full overflow-hidden bg-sand ${className}`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        unoptimized={src.endsWith(".svg")}
+        className="object-cover"
+      />
+    </div>
+  );
+}
