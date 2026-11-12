@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { store, type Category } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
 import { useCart } from "./cart-provider";
@@ -11,13 +11,6 @@ import { BagIcon, ChevronIcon, CloseIcon, MenuIcon } from "./icons";
 export function Header({ categories }: { categories: Category[] }) {
   const { count, open, ready } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = usePathname();
-
-  // Cerrar el menú al navegar
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMenuOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -25,6 +18,10 @@ export function Header({ categories }: { categories: Category[] }) {
 
   return (
     <>
+      {/* La ruta actual solo existe en el navegador: va en Suspense para no bloquear el prerender */}
+      <Suspense fallback={null}>
+        <CloseOnNavigate onNavigate={() => setMenuOpen(false)} />
+      </Suspense>
       <div className="eyebrow bg-ink py-2 text-center text-[0.62rem] text-ivory">
         {store.freeShippingFrom > 0
           ? `Envío gratis desde ${formatCOP(store.freeShippingFrom)} · Toda Colombia`
@@ -117,4 +114,14 @@ function MenuLink({ href, label, accent }: { href: string; label: string; accent
       <ChevronIcon width={18} className="text-muted" />
     </Link>
   );
+}
+
+/** Cierra el menú al cambiar de página. */
+function CloseOnNavigate({ onNavigate }: { onNavigate: () => void }) {
+  const pathname = usePathname();
+  useEffect(() => {
+    onNavigate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+  return null;
 }
