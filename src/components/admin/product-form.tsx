@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { refreshCatalog } from "@/app/actions";
-import { allSizes, categories, type CategorySlug } from "@/lib/config";
+import { allSizes } from "@/lib/config";
+import { useAdminCategories } from "./use-categories";
 import { slugify } from "@/lib/format";
 import { getSupabase, PRODUCT_IMAGES_BUCKET } from "@/lib/supabase";
 import { toRow, type Product, type ProductColor } from "@/lib/types";
@@ -18,7 +19,7 @@ type Props = {
 const blank: Omit<Product, "id"> = {
   slug: "",
   name: "",
-  category: "tacones",
+  category: "",
   description: "",
   material: "",
   price: 0,
@@ -37,6 +38,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
     const { id: _id, ...rest } = product;
     return rest;
   });
+  const { categories } = useAdminCategories();
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -160,9 +162,10 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
           />
         </Label>
         <Label text="Categoría">
-          <select value={form.category} onChange={(e) => set("category", e.target.value as CategorySlug)} className="field">
+          <select required value={form.category} onChange={(e) => set("category", e.target.value)} className="field">
+            <option value="" disabled>Elige una categoría</option>
             {categories.map((c) => (
-              <option key={c.slug} value={c.slug}>{c.label}</option>
+              <option key={c.slug} value={c.slug}>{c.label}{c.active ? "" : " (oculta)"}</option>
             ))}
           </select>
         </Label>

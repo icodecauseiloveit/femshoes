@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { allSizes, categories, categoryLabel } from "@/lib/config";
+import { allSizes, categoryLabel, type Category } from "@/lib/config";
 import type { Product } from "@/lib/types";
 import { CloseIcon } from "./icons";
 import { ProductCard } from "./product-card";
@@ -18,7 +18,7 @@ const quickFilters = [
   { value: "ofertas", label: "Ofertas" },
 ];
 
-export function ShopGrid({ products }: { products: Product[] }) {
+export function ShopGrid({ products, categories }: { products: Product[]; categories: Category[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,7 +58,7 @@ export function ShopGrid({ products }: { products: Product[] }) {
   }, [products, category, filter, size, sort]);
 
   const title = category
-    ? categoryLabel(category)
+    ? categoryLabel(category, categories)
     : filter === "nuevos"
       ? "Novedades"
       : filter === "ofertas"

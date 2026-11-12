@@ -4,6 +4,8 @@ import type { Session } from "@supabase/supabase-js";
 import { useCallback, useEffect, useState } from "react";
 import { refreshCatalog } from "@/app/actions";
 import { categoryLabel } from "@/lib/config";
+import { useAdminCategories } from "./use-categories";
+import { CategoriesPanel } from "./categories-panel";
 import { formatCOP } from "@/lib/format";
 import { sampleProducts } from "@/lib/sample-products";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -154,12 +156,12 @@ function Dashboard({ email }: { email: string }) {
     <div className="space-y-5">
       {header}
       {tabs.length > 1 && (
-        <div className="flex border-b border-line">
+        <div className="no-scrollbar -mx-4 flex overflow-x-auto border-b border-line px-4">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`eyebrow -mb-px border-b-2 px-4 py-3 text-[0.68rem] ${current.id === t.id ? "border-ink text-ink" : "border-transparent text-muted"}`}
+              className={`eyebrow -mb-px shrink-0 border-b-2 px-3 py-3 text-[0.65rem] ${current.id === t.id ? "border-ink text-ink" : "border-transparent text-muted"}`}
             >
               {t.label}
             </button>
@@ -167,15 +169,17 @@ function Dashboard({ email }: { email: string }) {
         </div>
       )}
       {current.id === "productos" && <ProductsPanel />}
+      {current.id === "categorias" && <CategoriesPanel />}
       {current.id === "pedidos" && <OrdersPanel role={role} />}
       {current.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
     </div>
   );
 }
 
-type Tab = "productos" | "pedidos" | "usuarios";
+type Tab = "productos" | "categorias" | "pedidos" | "usuarios";
 const allTabs: { id: Tab; label: string; perm: keyof typeof permissions }[] = [
   { id: "productos", label: "Productos", perm: "products" },
+  { id: "categorias", label: "Categorías", perm: "products" },
   { id: "pedidos", label: "Pedidos", perm: "orders" },
   { id: "usuarios", label: "Usuarios", perm: "users" },
 ];
@@ -269,6 +273,7 @@ function ProductList({
   onToggle?: (p: Product) => void;
   onDelete?: (p: Product) => void;
 }) {
+  const { categories } = useAdminCategories();
   const [q, setQ] = useState("");
   const list = products.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
 
@@ -290,7 +295,7 @@ function ProductList({
               <button onClick={() => onEdit(p)} className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium">{p.name}</p>
                 <p className="text-xs text-muted">
-                  {categoryLabel(p.category)} · {formatCOP(p.price)}
+                  {categoryLabel(p.category, categories)} · {formatCOP(p.price)}
                 </p>
                 <p className={`text-xs ${stock === 0 ? "text-sale" : "text-muted"}`}>
                   {stock === 0 ? "Sin stock" : `${stock} pares`}

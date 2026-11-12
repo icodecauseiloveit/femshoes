@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { categories, store } from "@/lib/config";
+import { store, type Category } from "@/lib/config";
 
-export function Footer() {
+export function Footer({ categories }: { categories: Category[] }) {
   return (
     <footer className="mt-20 bg-ink text-ivory/80">
       <div className="mx-auto max-w-6xl px-5 py-12">

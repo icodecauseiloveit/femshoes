@@ -42,6 +42,13 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 - **Administrador:** gestiona productos y pedidos.
 - **Distribuidor:** ve los pedidos **por despachar** (confirmados) y los **despachados**, con foto, modelo, talla, color y cantidad, sin precios ni datos de la clienta. Descarga el PDF y marca los pedidos como despachados.
 
+## Categorías
+
+- Superadmin y administrador las gestionan en `/admin → Categorías`: crear, renombrar, ordenar, ocultar y eliminar.
+- El enlace de cada categoría (`/tienda?categoria=...`) no cambia al renombrarla.
+- No se puede eliminar una categoría que tenga productos; se puede ocultar.
+- Base de datos: ejecuta `supabase/migrations/004_categorias.sql`.
+
 ## Pedidos
 
 - Cuando la clienta toca "Enviar pedido por WhatsApp", el pedido se guarda en la tabla `orders` con un número (`FS-0001`) que va en el mensaje. Nombres, precios y existencias se toman de la base de datos.

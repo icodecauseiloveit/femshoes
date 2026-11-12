@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { categories, store } from "@/lib/config";
+import { store, type Category } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
 import { useCart } from "./cart-provider";
 import { BagIcon, ChevronIcon, CloseIcon, MenuIcon } from "./icons";
 
-export function Header() {
+export function Header({ categories }: { categories: Category[] }) {
   const { count, open, ready } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();

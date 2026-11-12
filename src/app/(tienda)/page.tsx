@@ -2,12 +2,12 @@ import Link from "next/link";
 import { ArrowIcon, ReturnIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
-import { getProducts } from "@/lib/catalog";
-import { categories, store } from "@/lib/config";
+import { getCategories, getProducts } from "@/lib/catalog";
+import { store } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
 
 export default async function HomePage() {
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
   const featured = products.filter((p) => p.featured).slice(0, 8);
   const newIn = products.filter((p) => p.isNew).slice(0, 8);
   const hero = featured[0] ?? products[0];

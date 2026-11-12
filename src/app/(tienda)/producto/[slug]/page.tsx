@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { AddToCart } from "@/components/add-to-cart";
 import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
-import { getProductBySlug, getProducts } from "@/lib/catalog";
+import { getCategories, getProductBySlug, getProducts } from "@/lib/catalog";
 import { categoryLabel, store } from "@/lib/config";
 import { discountPercent, formatCOP } from "@/lib/format";
 
@@ -39,7 +39,7 @@ async function ProductView({ params }: { params: Promise<{ slug: string }> }) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const all = await getProducts();
+  const [all, categories] = await Promise.all([getProducts(), getCategories()]);
   const related = all.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const fill = all.filter((p) => p.category !== product.category && p.id !== product.id);
   const suggestions = [...related, ...fill].slice(0, 4);
@@ -53,7 +53,7 @@ async function ProductView({ params }: { params: Promise<{ slug: string }> }) {
         <div className="px-5 pt-5 md:px-0 md:pt-0">
           <nav className="eyebrow flex gap-2 text-[0.6rem] text-muted">
             <Link href="/tienda">Tienda</Link>/
-            <Link href={`/tienda?categoria=${product.category}`}>{categoryLabel(product.category)}</Link>
+            <Link href={`/tienda?categoria=${product.category}`}>{categoryLabel(product.category, categories)}</Link>
           </nav>
           <h1 className="mt-2 text-4xl leading-tight md:text-5xl">{product.name}</h1>
           <p className="mt-2 flex items-baseline gap-3 text-lg">
