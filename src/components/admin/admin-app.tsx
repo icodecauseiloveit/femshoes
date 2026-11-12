@@ -16,10 +16,27 @@ import { OrdersPanel } from "./orders-panel";
 import { ProductForm } from "./product-form";
 import { StaffPanel } from "./staff-panel";
 
+/** Lee el enlace de recuperación (/admin?reset=1#...) antes de que Supabase limpie la URL. */
+function readRecoveryLink() {
+  if (typeof window === "undefined") return { recovering: false, linkError: false };
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  return {
+    recovering: query.get("reset") === "1" || hash.get("type") === "recovery",
+    linkError: Boolean(hash.get("error_code") || query.get("error_code")),
+  };
+}
+
+function clearRecoveryLink() {
+  window.history.replaceState(null, "", "/admin");
+}
+
 export function AdminApp() {
+  const [link] = useState(readRecoveryLink);
   const supabase = getSupabase();
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(isSupabaseConfigured);
+  const [recovering, setRecovering] = useState(link.recovering);
 
   useEffect(() => {
     if (!supabase) return;
@@ -27,13 +44,29 @@ export function AdminApp() {
       setSession(data.session);
       setChecking(false);
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "PASSWORD_RECOVERY") setRecovering(true);
+      setSession(s);
+    });
     return () => data.subscription.unsubscribe();
   }, [supabase]);
 
   if (!supabase) return <DemoMode />;
   if (checking) return <p className="py-20 text-center text-sm text-muted">Cargando…</p>;
-  if (!session) return <Login />;
+  if (recovering && session) {
+    return (
+      <ResetPassword
+        onDone={() => {
+          clearRecoveryLink();
+          setRecovering(false);
+        }}
+      />
+    );
+  }
+  if (!session) {
+    const expired = recovering || link.linkError;
+    return <Login notice={expired ? "El enlace no es válido o ya expiró. Solicita uno nuevo." : ""} />;
+  }
   return <Dashboard email={session.user.email ?? ""} />;
 }
 
@@ -78,20 +111,64 @@ function DemoMode() {
 
 /* ---------------- Inicio de sesión ---------------- */
 
-function Login() {
+function Login({ notice = "" }: { notice?: string }) {
   const supabase = getSupabase()!;
+  const [mode, setMode] = useState<"login" | "forgot">(notice ? "forgot" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(notice);
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  function switchMode(next: "login" | "forgot") {
+    setMode(next);
+    setError("");
+    setSent(false);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError("Correo o contraseña incorrectos.");
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError("Correo o contraseña incorrectos.");
+    } else {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/admin?reset=1`,
+      });
+      // Por seguridad no revelamos si el correo existe: solo avisamos si falló el envío.
+      if (error && error.status === 429) setError("Ya pediste un enlace hace poco. Espera un minuto e inténtalo de nuevo.");
+      else if (error && (error.status ?? 500) >= 500) setError("No pudimos enviar el correo. Inténtalo más tarde.");
+      else setSent(true);
+    }
     setLoading(false);
+  }
+
+  if (mode === "forgot") {
+    return (
+      <form onSubmit={submit} className="mx-auto mt-10 max-w-sm space-y-4">
+        <h1 className="text-3xl">Recuperar contraseña</h1>
+        {sent ? (
+          <p className="text-sm leading-relaxed text-ink-soft">
+            Si <strong>{email.trim()}</strong> pertenece a una cuenta del equipo, te enviamos un enlace para crear una
+            contraseña nueva. Revisa tu bandeja de entrada (y la carpeta de spam).
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-ink-soft">Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.</p>
+            <input type="email" required autoComplete="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} className="field" />
+            {error && <p className="text-sm text-sale">{error}</p>}
+            <button disabled={loading} className="btn w-full bg-ink text-ivory">
+              {loading ? "Enviando…" : "Enviar enlace"}
+            </button>
+          </>
+        )}
+        <button type="button" onClick={() => switchMode("login")} className="block w-full text-center text-sm underline underline-offset-4">
+          Volver a iniciar sesión
+        </button>
+      </form>
+    );
   }
 
   return (
@@ -102,6 +179,51 @@ function Login() {
       {error && <p className="text-sm text-sale">{error}</p>}
       <button disabled={loading} className="btn w-full bg-ink text-ivory">
         {loading ? "Entrando…" : "Entrar"}
+      </button>
+      <button type="button" onClick={() => switchMode("forgot")} className="block w-full text-center text-sm underline underline-offset-4">
+        ¿Olvidaste tu contraseña?
+      </button>
+    </form>
+  );
+}
+
+/* ---------------- Nueva contraseña (desde el enlace del correo) ---------------- */
+
+function ResetPassword({ onDone }: { onDone: () => void }) {
+  const supabase = getSupabase()!;
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (password.length < 8) return setError("La contraseña debe tener al menos 8 caracteres.");
+    if (password !== confirm) return setError("Las contraseñas no coinciden.");
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) {
+      setError(
+        error.code === "same_password" || /different from the old/i.test(error.message)
+          ? "La contraseña nueva debe ser distinta a la anterior."
+          : "No pudimos guardar la contraseña. Solicita un enlace nuevo e inténtalo otra vez.",
+      );
+      return;
+    }
+    onDone();
+  }
+
+  return (
+    <form onSubmit={submit} className="mx-auto mt-10 max-w-sm space-y-4">
+      <h1 className="text-3xl">Nueva contraseña</h1>
+      <p className="text-sm text-ink-soft">Elige una contraseña de al menos 8 caracteres.</p>
+      <input type="password" required minLength={8} autoComplete="new-password" placeholder="Contraseña nueva" value={password} onChange={(e) => setPassword(e.target.value)} className="field" />
+      <input type="password" required minLength={8} autoComplete="new-password" placeholder="Repite la contraseña" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="field" />
+      {error && <p className="text-sm text-sale">{error}</p>}
+      <button disabled={loading} className="btn w-full bg-ink text-ivory">
+        {loading ? "Guardando…" : "Guardar y entrar"}
       </button>
     </form>
   );
