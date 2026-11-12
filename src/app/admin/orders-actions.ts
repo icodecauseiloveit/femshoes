@@ -114,3 +114,75 @@ export async function updateOrderStatus(
     return undefined;
   });
 }
+
+export type OrdersReportInput = { from: string; to: string; statuses: string[] };
+
+export type OrdersReport = {
+  from: string;
+  to: string;
+  statuses: OrderStatus[];
+  generatedAt: string;
+  generatedBy: string;
+  orders: (OrderView & { subtotal: number; customer: NonNullable<OrderView["customer"]> })[];
+};
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+// Las fechas del reporte se interpretan en hora de Colombia
+const startOfDay = (d: string) => new Date(`${d}T00:00:00-05:00`);
+
+/**
+ * Pedidos para el reporte en PDF (solo superadmin y administrador):
+ * rango de fechas (de creación del pedido, hora de Colombia) y estados elegidos.
+ */
+export async function getOrdersReport(accessToken: string, input: OrdersReportInput): Promise<Result<OrdersReport>> {
+  return run(async () => {
+    const { admin, myEmail } = await requireRole(accessToken, ["superadmin", "admin"]);
+    const statuses = [...new Set((input.statuses ?? []).filter(isOrderStatus))];
+    if (statuses.length === 0) throw new ActionError("Elige al menos un estado.");
+    if (!DAY.test(input.from) || !DAY.test(input.to)) throw new ActionError("Elige las fechas del reporte.");
+    const from = startOfDay(input.from);
+    const toExclusive = new Date(startOfDay(input.to).getTime() + 24 * 3600 * 1000);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(toExclusive.getTime()) || from >= toExclusive) {
+      throw new ActionError("La fecha inicial debe ser anterior o igual a la final.");
+    }
+    if (toExclusive.getTime() - from.getTime() > 400 * 24 * 3600 * 1000) {
+      throw new ActionError("El rango máximo del reporte es de un año.");
+    }
+
+    const { data, error } = await admin
+      .from("orders")
+      .select("*")
+      .in("status", statuses)
+      .gte("created_at", from.toISOString())
+      .lt("created_at", toExclusive.toISOString())
+      .order("created_at", { ascending: true })
+      .limit(3000);
+    if (error) throw error;
+
+    return {
+      from: input.from,
+      to: input.to,
+      statuses,
+      generatedAt: new Date().toISOString(),
+      generatedBy: myEmail,
+      orders: (data as OrderRow[]).map((r) => ({
+        id: r.id,
+        number: r.number,
+        status: r.status,
+        createdAt: r.created_at,
+        totalPairs: r.total_pairs,
+        items: r.items,
+        subtotal: r.subtotal,
+        customer: {
+          name: r.customer_name,
+          phone: r.customer_phone,
+          city: r.city,
+          address: r.address,
+          neighborhood: r.neighborhood,
+          payment: r.payment_method,
+          notes: r.notes,
+        },
+      })),
+    };
+  });
+}

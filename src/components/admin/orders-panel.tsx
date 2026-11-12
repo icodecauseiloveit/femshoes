@@ -7,6 +7,7 @@ import { orderCode, orderStatuses, statusLabel, type OrderStatus, type OrderView
 import { permissions, type Role } from "@/lib/roles";
 import { getSupabase } from "@/lib/supabase";
 import { ProductImage } from "../product-image";
+import { OrdersReportButton } from "./orders-report";
 
 async function getToken() {
   const { data } = await getSupabase()!.auth.getSession();
@@ -71,7 +72,10 @@ export function OrdersPanel({ role }: { role: Role }) {
         <h1 className="text-3xl">
           Pedidos <span className="text-lg text-muted">({orders.length})</span>
         </h1>
-        <button onClick={load} className="text-xs text-ink-soft underline underline-offset-4">Actualizar</button>
+        <div className="flex items-center gap-3">
+          <button onClick={load} className="text-xs text-ink-soft underline underline-offset-4">Actualizar</button>
+          {canManage && <OrdersReportButton />}
+        </div>
       </div>
 
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
