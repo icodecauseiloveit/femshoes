@@ -66,6 +66,14 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 - Cada renglón de pedido guarda su código completo; se ve en el panel de pedidos y en el PDF. En `/admin → Productos` se puede buscar por código.
 - Base de datos: ejecuta `supabase/migrations/006_codigos.sql` antes de desplegar esta versión.
 
+## Clientas y cartera
+
+- **Clientas** (`/admin → Clientas`, superadmin y administrador): una ficha por clienta, identificada por su celular. Cada pedido nuevo se vincula solo a su clienta (o la crea). Incluye documento, correo, dirección, cumpleaños, etiquetas (VIP, Mayorista…), notas, historial de pedidos, indicadores (total comprado, ticket promedio, última compra, saldo) y tallas/colores/modelos que más compra. Segmentos: nuevas, recurrentes, inactivas (+90 días), con saldo y que aceptan novedades. Exporta a Excel (CSV).
+- **Cobro de pedidos:** envío y descuento por pedido (total = productos + envío − descuento), pagos y abonos con fecha, método y referencia; estado Sin pago / Abonado / Pagado.
+- **Cartera** (`/admin → Cartera`): saldos de pedidos confirmados y despachados, por antigüedad desde el despacho (0–30, 31–60, 61–90, +90 días y por entregar), con enlace para cobrar por WhatsApp.
+- **Datos personales:** el checkout enlaza `/tratamiento-de-datos` y pide autorización opcional para enviar novedades (se guarda la fecha). Revisa el texto de la política con tu asesor.
+- Base de datos: ejecuta `supabase/migrations/007_clientes_cartera.sql` antes de desplegar esta versión.
+
 ## Pedidos
 
 - Cuando la clienta toca "Enviar pedido por WhatsApp", el pedido se guarda en la tabla `orders` con un número (`FS-0001`) que va en el mensaje. Nombres, precios y existencias se toman de la base de datos.

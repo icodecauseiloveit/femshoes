@@ -8,9 +8,11 @@ import {
   type OrderStatus,
   type OrderView,
 } from "@/lib/orders";
+import type { Payment } from "@/lib/customers";
+import { financeOf, paymentsByOrder } from "@/lib/order-finance";
 import { ActionError, requireRole, run, type Result } from "@/lib/staff-auth";
 
-type OrderRow = {
+export type OrderRow = {
   id: string;
   number: number;
   status: OrderStatus;
@@ -25,6 +27,11 @@ type OrderRow = {
   neighborhood: string;
   payment_method: string;
   notes: string;
+  customer_id?: string | null;
+  shipping_cost?: number;
+  discount?: number;
+  total?: number;
+  dispatched_at?: string | null;
 };
 
 /**
@@ -50,8 +57,10 @@ export async function listOrders(accessToken: string, status?: string): Promise<
 
     const { data, error } = await query;
     if (error) throw error;
+    const rows = data as OrderRow[];
+    const payments = full ? await paymentsByOrder(admin, rows.map((r) => r.id)) : new Map<string, Payment[]>();
 
-    return (data as OrderRow[]).map((r): OrderView => {
+    return rows.map((r): OrderView => {
       const base: OrderView = {
         id: r.id,
         number: r.number,
@@ -68,6 +77,7 @@ export async function listOrders(accessToken: string, status?: string): Promise<
       return {
         ...base,
         subtotal: r.subtotal,
+        finance: financeOf(r, payments.get(r.id) ?? []),
         customer: {
           name: r.customer_name,
           phone: r.customer_phone,

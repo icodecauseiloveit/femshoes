@@ -7,6 +7,7 @@ import { orderCode, orderStatuses, statusLabel, type OrderStatus, type OrderView
 import { permissions, type Role } from "@/lib/roles";
 import { getSupabase } from "@/lib/supabase";
 import { ProductImage } from "../product-image";
+import { OrderBilling, PaymentBadge } from "./order-billing";
 import { OrdersReportButton } from "./orders-report";
 
 async function getToken() {
@@ -21,7 +22,7 @@ const statusStyle: Record<OrderStatus, string> = {
   cancelado: "bg-sale/10 text-sale",
 };
 
-export function OrdersPanel({ role }: { role: Role }) {
+export function OrdersPanel({ role, onOpenCustomer }: { role: Role; onOpenCustomer?: (id: string) => void }) {
   const canManage = permissions.manageOrders(role);
   const [filter, setFilter] = useState<OrderStatus>(canManage ? "pendiente" : "confirmado");
   const [orders, setOrders] = useState<OrderView[]>([]);
@@ -120,7 +121,10 @@ export function OrdersPanel({ role }: { role: Role }) {
                     {new Date(o.createdAt).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })}
                   </p>
                 </div>
-                <span className={`eyebrow px-2 py-1 text-[0.6rem] ${statusStyle[o.status]}`}>{statusLabel(o.status)}</span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`eyebrow px-2 py-1 text-[0.6rem] ${statusStyle[o.status]}`}>{statusLabel(o.status)}</span>
+                  {o.finance && o.status !== "cancelado" && <PaymentBadge total={o.finance.total} paid={o.finance.paid} />}
+                </div>
               </div>
 
               {o.customer && (
@@ -129,6 +133,11 @@ export function OrdersPanel({ role }: { role: Role }) {
                   <p>{o.customer.address}{o.customer.neighborhood && `, barrio ${o.customer.neighborhood}`} · {o.customer.city}</p>
                   <p>Pago: {o.customer.payment}</p>
                   {o.customer.notes && <p>Notas: {o.customer.notes}</p>}
+                  {o.finance?.customerId && onOpenCustomer && (
+                    <button onClick={() => onOpenCustomer(o.finance!.customerId!)} className="mt-1 text-xs text-ink underline underline-offset-4">
+                      Ver ficha de la clienta
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -151,6 +160,8 @@ export function OrdersPanel({ role }: { role: Role }) {
                   </li>
                 ))}
               </ul>
+
+              {o.finance && <OrderBilling order={o} onChanged={load} />}
 
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line p-4">
                 <p className="text-sm">

@@ -24,6 +24,7 @@ export function Footer({ categories }: { categories: Category[] }) {
             <ul className="space-y-3">
               <li><Link href="/guia-de-tallas" className="hover:text-ivory">Guía de tallas</Link></li>
               <li><Link href="/envios-y-cambios" className="hover:text-ivory">Envíos y cambios</Link></li>
+              <li><Link href="/tratamiento-de-datos" className="hover:text-ivory">Tratamiento de datos</Link></li>
               <li>
                 <a href={`https://wa.me/${store.whatsapp}`} target="_blank" rel="noopener" className="hover:text-ivory">
                   WhatsApp {store.whatsappDisplay}

@@ -25,5 +25,6 @@ export const permissions = {
   products: (r: Role) => r === "superadmin" || r === "admin",
   orders: () => true,
   manageOrders: (r: Role) => r === "superadmin" || r === "admin",
+  customers: (r: Role) => r === "superadmin" || r === "admin",
   users: (r: Role) => r === "superadmin",
 };

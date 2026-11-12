@@ -12,7 +12,9 @@ import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { fromRow, skuOf, totalStock, type Product, type ProductRow } from "@/lib/types";
 import { ProductImage } from "../product-image";
 import { isRole, permissions, roleLabel, type Role } from "@/lib/roles";
+import { CustomersPanel } from "./customers-panel";
 import { OrdersPanel } from "./orders-panel";
+import { ReceivablesPanel } from "./receivables-panel";
 import { ProductForm } from "./product-form";
 import { StaffPanel } from "./staff-panel";
 
@@ -236,6 +238,11 @@ function Dashboard({ email }: { email: string }) {
   const myEmail = email.toLowerCase();
   const [role, setRole] = useState<Role | null | undefined>(undefined);
   const [tab, setTab] = useState<Tab | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const openCustomer = (id: string) => {
+    setCustomerId(id);
+    setTab("clientes");
+  };
 
   useEffect(() => {
     supabase
@@ -282,7 +289,10 @@ function Dashboard({ email }: { email: string }) {
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                setTab(t.id);
+                if (t.id === "clientes") setCustomerId(null);
+              }}
               className={`eyebrow -mb-px shrink-0 border-b-2 px-3 py-3 text-[0.65rem] ${current.id === t.id ? "border-ink text-ink" : "border-transparent text-muted"}`}
             >
               {t.label}
@@ -292,17 +302,21 @@ function Dashboard({ email }: { email: string }) {
       )}
       {current.id === "productos" && <ProductsPanel />}
       {current.id === "categorias" && <CategoriesPanel />}
-      {current.id === "pedidos" && <OrdersPanel role={role} />}
+      {current.id === "pedidos" && <OrdersPanel role={role} onOpenCustomer={permissions.customers(role) ? openCustomer : undefined} />}
+      {current.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} />}
+      {current.id === "cartera" && <ReceivablesPanel onOpenCustomer={openCustomer} />}
       {current.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
     </div>
   );
 }
 
-type Tab = "productos" | "categorias" | "pedidos" | "usuarios";
+type Tab = "productos" | "categorias" | "pedidos" | "clientes" | "cartera" | "usuarios";
 const allTabs: { id: Tab; label: string; perm: keyof typeof permissions }[] = [
   { id: "productos", label: "Productos", perm: "products" },
   { id: "categorias", label: "Categorías", perm: "products" },
   { id: "pedidos", label: "Pedidos", perm: "orders" },
+  { id: "clientes", label: "Clientas", perm: "customers" },
+  { id: "cartera", label: "Cartera", perm: "customers" },
   { id: "usuarios", label: "Usuarios", perm: "users" },
 ];
 

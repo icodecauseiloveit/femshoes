@@ -48,6 +48,19 @@ export type OrderView = {
   totalPairs: number;
   subtotal?: number;
   customer?: OrderCustomer;
+  // Solo superadmin/admin: cobro del pedido
+  finance?: OrderFinance;
+};
+
+export type OrderFinance = {
+  customerId: string | null;
+  shippingCost: number;
+  discount: number;
+  total: number; // productos + envío - descuento
+  paid: number;
+  balance: number;
+  dispatchedAt: string | null;
+  payments: import("./customers").Payment[];
 };
 
 export function orderCode(n: number) {

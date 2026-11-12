@@ -30,6 +30,7 @@ export function Checkout() {
   const [sending, setSending] = useState(false);
   const [sentCode, setSentCode] = useState("");
   const [issues, setIssues] = useState<string[]>([]);
+  const [marketing, setMarketing] = useState(false);
 
   // Recordar los datos de la clienta en este teléfono
   useEffect(() => {
@@ -60,6 +61,7 @@ export function Checkout() {
     const res = await createOrder({
       items: items.map((i) => ({ productId: i.productId, variantId: i.variantId, size: i.size, qty: i.qty })),
       customer,
+      marketingConsent: marketing,
     });
     setSending(false);
 
@@ -199,8 +201,21 @@ export function Checkout() {
         <button form="checkout" type="submit" disabled={sending} className="btn mt-4 w-full bg-[#25D366] text-white hover:opacity-90">
           <WhatsAppIcon width={18} height={18} /> {sending ? "Registrando pedido…" : "Enviar pedido por WhatsApp"}
         </button>
+        <label className="mt-4 flex items-start gap-2.5 text-xs leading-relaxed text-ink-soft">
+          <input
+            type="checkbox"
+            checked={marketing}
+            onChange={(e) => setMarketing(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-ink"
+          />
+          Quiero recibir por WhatsApp novedades y ofertas de {store.name}.
+        </label>
         <p className="mt-3 text-center text-xs text-muted">
           No se realiza ningún cobro aquí. Confirmamos tu pedido por WhatsApp.
+        </p>
+        <p className="mt-2 text-center text-[0.7rem] text-muted">
+          Al enviar tu pedido usamos tus datos para gestionarlo, según nuestra{" "}
+          <Link href="/tratamiento-de-datos" className="underline underline-offset-2">política de tratamiento de datos</Link>.
         </p>
       </aside>
     </div>

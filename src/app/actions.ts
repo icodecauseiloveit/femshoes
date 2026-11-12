@@ -14,6 +14,7 @@ export async function refreshCatalog() {
 type CreateOrderInput = {
   items: { productId: string; variantId: string; size: number; qty: number }[];
   customer: OrderCustomer;
+  marketingConsent?: boolean;
 };
 
 type CreateOrderResult =
@@ -118,6 +119,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         payment_method: customer.payment,
         notes: customer.notes,
         items,
+        marketing_consent: input.marketingConsent === true,
         total_pairs: totalPairs,
         subtotal,
       })
