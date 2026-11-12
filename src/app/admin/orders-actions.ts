@@ -61,7 +61,7 @@ export async function listOrders(accessToken: string, status?: string): Promise<
         items: r.items.map((i) =>
           full
             ? i
-            : { productId: i.productId, slug: i.slug, name: i.name, image: i.image, size: i.size, color: i.color, qty: i.qty },
+            : { productId: i.productId, sku: i.sku, slug: i.slug, name: i.name, image: i.image, size: i.size, color: i.color, qty: i.qty },
         ),
       };
       if (!full) return base;

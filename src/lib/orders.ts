@@ -18,6 +18,7 @@ export function statusLabel(s: string) {
 export type OrderItem = {
   productId: string;
   variantId?: string; // pedidos anteriores a los colores no lo tienen
+  sku?: string; // código interno del par: TAC-0012-NEG-37
   slug: string;
   name: string;
   image: string;

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { defaultCategories, type Category } from "@/lib/config";
 import { getSupabase } from "@/lib/supabase";
 
-type Row = { slug: string; label: string; sort_order: number; active: boolean };
+type Row = { slug: string; label: string; sort_order: number; active: boolean; code?: string | null };
 
 /** Categorías para el panel (incluye las ocultas). En modo de ejemplo usa las categorías por defecto. */
 export function useAdminCategories() {
@@ -23,7 +23,9 @@ export function useAdminCategories() {
     if (error) setError(error.message);
     else {
       setError("");
-      setCategories((data as Row[]).map((r) => ({ slug: r.slug, label: r.label, sortOrder: r.sort_order, active: r.active })));
+      setCategories(
+        (data as Row[]).map((r) => ({ slug: r.slug, label: r.label, sortOrder: r.sort_order, active: r.active, code: r.code ?? undefined })),
+      );
     }
     setLoading(false);
   }, []);

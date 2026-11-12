@@ -7,6 +7,7 @@ export type ProductColor = { name: string; hex: string };
 /** Un color de un modelo: sus fotos y sus existencias por talla. */
 export type ProductVariant = {
   id: string; // identificador corto y estable (no cambia si se renombra el color)
+  code?: string; // código interno del color (NEG); lo fija la base de datos al guardar
   color: string;
   hex: string;
   images: string[];
@@ -34,6 +35,7 @@ export type ProductInput = {
  */
 export type Product = ProductInput & {
   id: string;
+  code?: string; // código interno del modelo (TAC-0012); lo asigna la base de datos
   colors: ProductColor[];
   sizes: SizeStock[];
   images: string[];
@@ -42,6 +44,7 @@ export type Product = ProductInput & {
 // Fila tal como se guarda en Supabase (snake_case)
 export type ProductRow = {
   id: string;
+  code?: string | null;
   slug: string;
   name: string;
   category: string;
@@ -82,8 +85,10 @@ export function legacyVariants(colors: ProductColor[], sizes: SizeStock[], image
 }
 
 function cleanVariant(v: ProductVariant): ProductVariant {
+  const code = normalizeCode(v.code ?? "");
   return {
     id: String(v.id || newVariantId()),
+    ...(code ? { code } : {}),
     color: String(v.color ?? "").trim(),
     hex: v.hex || "#141210",
     images: (v.images ?? []).filter(Boolean),
@@ -104,7 +109,7 @@ export function summarize(variants: ProductVariant[]) {
   };
 }
 
-export function withSummary(p: ProductInput & { id: string }): Product {
+export function withSummary(p: ProductInput & { id: string; code?: string }): Product {
   const variants = p.variants.map(cleanVariant);
   return { ...p, variants, ...summarize(variants) };
 }
@@ -115,6 +120,7 @@ export function fromRow(r: ProductRow): Product {
     : legacyVariants(r.colors ?? [], r.sizes ?? [], r.images ?? []);
   return withSummary({
     id: r.id,
+    ...(r.code ? { code: r.code } : {}),
     slug: r.slug,
     name: r.name,
     category: r.category as CategorySlug,
@@ -129,7 +135,8 @@ export function fromRow(r: ProductRow): Product {
   });
 }
 
-export function toRow(p: ProductInput): Omit<ProductRow, "id"> {
+/** Fila para guardar. El código del modelo no se envía: lo asigna la base de datos y no cambia. */
+export function toRow(p: ProductInput): Omit<ProductRow, "id" | "code"> {
   const variants = p.variants.map(cleanVariant);
   const { colors, sizes, images } = summarize(variants);
   return {
@@ -172,4 +179,32 @@ export function defaultVariant(p: Product, wanted?: string | null) {
 /** Todas las tallas del modelo (unión entre colores), para que la cuadrícula no cambie de forma. */
 export function modelSizes(p: Product) {
   return [...new Set(p.variants.flatMap((v) => v.sizes.map((s) => s.size)))].sort((a, b) => a - b);
+}
+
+/* ---------------- Código interno (SKU) ---------------- */
+// Formato: CATEGORÍA-MODELO-COLOR-TALLA, por ejemplo TAC-0012-NEG-37
+
+export const CODE_PATTERN = /^[A-Z0-9]{2,4}$/;
+
+export function normalizeCode(code: string) {
+  return code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+}
+
+/** Sugiere un código de 2-3 caracteres a partir de un nombre ("Dorado champán" -> "DOR"). */
+export function codeFromText(text: string) {
+  const c = slugify(text).replace(/-/g, "").slice(0, 3).toUpperCase();
+  return c.length >= 2 ? c : c.padEnd(2, "X");
+}
+
+/** Sugerencia que no choca con los códigos ya usados (NEG, NE2, NE3…). */
+export function uniqueCode(text: string, used: string[]) {
+  const base = codeFromText(text);
+  let code = base;
+  for (let n = 2; used.includes(code); n++) code = `${base.slice(0, 2)}${n}`;
+  return code;
+}
+
+/** Código completo del par: modelo + color + talla. Vacío si aún no tiene códigos asignados. */
+export function skuOf(productCode: string | undefined, variantCode: string | undefined, size: number | string) {
+  return productCode && variantCode ? `${productCode}-${variantCode}-${size}` : "";
 }

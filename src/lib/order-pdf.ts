@@ -105,7 +105,14 @@ export async function downloadOrderPdf(order: OrderView) {
     }
     const mid = y + 16;
     doc.setFontSize(10);
-    doc.text(doc.splitTextToSize(item.name, col.size - col.name - 4), col.name, mid - 2);
+    const nameLines = doc.splitTextToSize(item.name, col.size - col.name - 4) as string[];
+    doc.text(nameLines, col.name, mid - 2);
+    if (item.sku) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(110);
+      doc.text(item.sku, col.name, mid - 2 + nameLines.length * 4.5);
+      doc.setTextColor(20);
+    }
     doc.setFontSize(10);
     doc.text(String(item.size), col.size, mid);
     doc.setFontSize(9);

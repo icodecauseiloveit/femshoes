@@ -6,7 +6,18 @@ import { allSizes } from "@/lib/config";
 import { useAdminCategories } from "./use-categories";
 import { slugify } from "@/lib/format";
 import { getSupabase, PRODUCT_IMAGES_BUCKET } from "@/lib/supabase";
-import { newVariantId, toRow, variantStock, type Product, type ProductInput, type ProductVariant } from "@/lib/types";
+import {
+  CODE_PATTERN,
+  newVariantId,
+  normalizeCode,
+  skuOf,
+  toRow,
+  uniqueCode,
+  variantStock,
+  type Product,
+  type ProductInput,
+  type ProductVariant,
+} from "@/lib/types";
 import { ProductImage } from "../product-image";
 
 type Props = {
@@ -36,9 +47,19 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
   const [form, setForm] = useState<ProductInput>(() => {
     if (!product) return blank;
     const { id: _id, colors: _c, sizes: _s, images: _i, ...rest } = product;
-    return { ...rest, variants: rest.variants.map((v) => ({ ...v, images: [...v.images], sizes: v.sizes.map((x) => ({ ...x })) })) };
+    const used: string[] = rest.variants.map((v) => v.code ?? "").filter(Boolean);
+    const variants = rest.variants.map((v) => {
+      // Colores sin código (guardados antes de los códigos): se sugiere uno
+      const code = v.code || uniqueCode(v.color, used);
+      if (!v.code) used.push(code);
+      return { ...v, code, images: [...v.images], sizes: v.sizes.map((x) => ({ ...x })) };
+    });
+    return { ...rest, variants };
   });
   const { categories } = useAdminCategories();
+  // Códigos de color ya guardados: no se pueden cambiar
+  const [lockedCodes] = useState(() => new Map((product?.variants ?? []).filter((v) => v.code).map((v) => [v.id, v.code!])));
+  const categoryCode = categories.find((c) => c.slug === form.category)?.code;
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null); // id del color que está subiendo fotos
@@ -108,6 +129,11 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
     const names = variants.map((v) => slugify(v.color));
     const dup = names.find((n, i) => names.indexOf(n) !== i);
     if (dup) return setError(`Hay dos colores con el mismo nombre (${variants[names.indexOf(dup)].color}).`);
+    const badCode = variants.find((v) => !lockedCodes.has(v.id) && !CODE_PATTERN.test(v.code ?? ""));
+    if (badCode) return setError(`El código del color ${badCode.color} debe tener de 2 a 4 letras o números.`);
+    const codes = variants.map((v) => lockedCodes.get(v.id) ?? v.code);
+    const dupCode = codes.find((c, i) => codes.indexOf(c) !== i);
+    if (dupCode) return setError(`Hay dos colores con el código ${dupCode}. Cambia uno de ellos.`);
     const noSizes = variants.find((v) => v.sizes.length === 0);
     if (noSizes) return setError(`Agrega al menos una talla al color ${noSizes.color}.`);
     if (demo) return setError("Modo de ejemplo: conecta Supabase para guardar cambios.");
@@ -133,6 +159,19 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
         <button type="button" onClick={onClose} className="text-sm text-ink-soft">← Volver</button>
         <h1 className="text-2xl">{product ? "Editar producto" : "Nuevo producto"}</h1>
         <span className="w-12" />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border border-line bg-white px-3 py-2">
+        <span className="text-xs text-ink-soft">Código del modelo</span>
+        {product?.code ? (
+          <span className="font-mono text-sm font-medium tracking-wider" data-testid="product-code">{product.code}</span>
+        ) : (
+          <span className="text-right text-xs text-muted">
+            <span className="font-mono text-sm tracking-wider text-ink-soft">{categoryCode ?? "???"}-####</span>
+            <br />
+            El número se asigna al guardar
+          </span>
+        )}
       </div>
 
       <Section title="Información">
@@ -196,6 +235,8 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
             total={form.variants.length}
             others={form.variants.filter((x) => x.id !== v.id)}
             uploading={uploading === v.id}
+            locked={lockedCodes.has(v.id)}
+            productCode={product?.code ?? `${categoryCode ?? "???"}-####`}
             onChange={(patch) => updateVariant(v.id, patch)}
             onUpload={(files) => upload(v.id, files)}
             onMove={(dir) => moveVariant(i, dir)}
@@ -204,7 +245,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
         ))}
         <button
           type="button"
-          onClick={() => set("variants", [...form.variants, blankVariant("#d9b9a0")])}
+          onClick={() => set("variants", [...form.variants, { ...blankVariant("#d9b9a0"), code: "" }])}
           className="btn w-full border border-dashed border-ink/40 bg-white text-ink-soft"
         >
           + Agregar otro color
@@ -265,6 +306,8 @@ type VariantEditorProps = {
   total: number;
   others: ProductVariant[];
   uploading: boolean;
+  locked: boolean; // el código ya se guardó y no cambia
+  productCode: string;
   onChange: (patch: Partial<ProductVariant>) => void;
   onUpload: (files: FileList | null) => void;
   onMove: (dir: -1 | 1) => void;
@@ -272,8 +315,17 @@ type VariantEditorProps = {
 };
 
 /** Bloque de un color: nombre y tono, fotos y tallas con existencias. */
-function VariantEditor({ variant: v, index, total, others, uploading, onChange, onUpload, onMove, onRemove }: VariantEditorProps) {
+function VariantEditor({ variant: v, index, total, others, uploading, locked, productCode, onChange, onUpload, onMove, onRemove }: VariantEditorProps) {
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // El código se sugiere a partir del nombre hasta que se escribe uno a mano
+  const [codeTouched, setCodeTouched] = useState(Boolean(v.code));
+  const usedCodes = others.map((o) => o.code ?? "").filter(Boolean);
+  const exampleSize = v.sizes[0]?.size ?? "37";
+
+  function setName(color: string) {
+    if (locked || codeTouched) onChange({ color });
+    else onChange({ color, code: color.trim() ? uniqueCode(color, usedCodes) : "" });
+  }
   const stockFor = (size: number) => v.sizes.find((s) => s.size === size)?.stock ?? 0;
   const pairs = variantStock(v);
 
@@ -308,11 +360,28 @@ function VariantEditor({ variant: v, index, total, others, uploading, onChange, 
         <input
           placeholder={`Nombre del color ${index + 1} (ej.: Negro)`}
           value={v.color}
-          onChange={(e) => onChange({ color: e.target.value })}
+          onChange={(e) => setName(e.target.value)}
           className="field"
           aria-label={`Nombre del color ${index + 1}`}
         />
+        <input
+          value={v.code ?? ""}
+          readOnly={locked}
+          onChange={(e) => {
+            setCodeTouched(true);
+            onChange({ code: normalizeCode(e.target.value) });
+          }}
+          placeholder="COD"
+          maxLength={4}
+          title={locked ? "El código ya se guardó y no cambia" : "Código del color (2 a 4 letras o números)"}
+          aria-label={`Código del color ${index + 1}`}
+          className={`field w-20 shrink-0 px-2 text-center font-mono uppercase tracking-wider ${locked ? "bg-sand text-ink-soft" : ""}`}
+        />
       </div>
+      <p className="-mt-2 text-xs text-muted">
+        Código de un par: <span className="font-mono text-ink-soft">{skuOf(productCode, v.code || "???", exampleSize)}</span>
+        {locked && " · fijo"}
+      </p>
       <div className="flex items-center justify-between text-xs text-muted">
         <span>
           {index === 0 ? "Color principal · " : ""}

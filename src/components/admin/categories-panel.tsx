@@ -5,6 +5,7 @@ import { refreshCatalog } from "@/app/actions";
 import type { Category } from "@/lib/config";
 import { slugify } from "@/lib/format";
 import { getSupabase } from "@/lib/supabase";
+import { CODE_PATTERN, normalizeCode, uniqueCode } from "@/lib/types";
 import { useAdminCategories } from "./use-categories";
 
 export function CategoriesPanel() {
@@ -14,6 +15,9 @@ export function CategoriesPanel() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [newLabel, setNewLabel] = useState("");
+  const [newCode, setNewCode] = useState("");
+  const [codeTouched, setCodeTouched] = useState(false);
+  const usedCodes = categories.map((c) => c.code ?? "").filter(Boolean);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -42,12 +46,17 @@ export function CategoriesPanel() {
     const slug = slugify(label);
     if (!label || !slug) return setError("Escribe un nombre válido.");
     if (categories.some((c) => c.slug === slug)) return setError(`Ya existe una categoría "${label}".`);
+    const code = newCode || uniqueCode(label, usedCodes);
+    if (!CODE_PATTERN.test(code)) return setError("El código debe tener de 2 a 4 letras o números.");
+    if (usedCodes.includes(code)) return setError(`El código ${code} ya lo usa otra categoría.`);
     setBusy(true);
     const sortOrder = Math.max(0, ...categories.map((c) => c.sortOrder)) + 1;
-    const { error } = await supabase.from("categories").insert({ slug, label, sort_order: sortOrder });
+    const { error } = await supabase.from("categories").insert({ slug, label, code, sort_order: sortOrder });
     setBusy(false);
-    if (error) return setError(error.message);
+    if (error) return setError(error.code === "23505" ? `El código ${code} ya lo usa otra categoría.` : error.message);
     setNewLabel("");
+    setNewCode("");
+    setCodeTouched(false);
     done(`Se creó la categoría "${label}".`);
   }
 
@@ -56,6 +65,16 @@ export function CategoriesPanel() {
     const { error } = await supabase.from("categories").update({ label: label.trim() }).eq("slug", c.slug);
     if (error) return setError(error.message);
     done(`"${c.label}" ahora se llama "${label.trim()}".`);
+  }
+
+  async function changeCode(c: Category, value: string) {
+    if (!supabase) return;
+    const code = normalizeCode(value);
+    if (code === c.code) return;
+    if (!CODE_PATTERN.test(code)) return setError("El código debe tener de 2 a 4 letras o números.");
+    const { error } = await supabase.from("categories").update({ code }).eq("slug", c.slug);
+    if (error) return setError(error.code === "23505" ? `El código ${code} ya lo usa otra categoría.` : error.message);
+    done(`El código de "${c.label}" ahora es ${code}. Aplica a los productos nuevos; los existentes conservan el suyo.`);
   }
 
   async function move(index: number, dir: -1 | 1) {
@@ -109,9 +128,25 @@ export function CategoriesPanel() {
       <form onSubmit={add} className="flex gap-2">
         <input
           value={newLabel}
-          onChange={(e) => setNewLabel(e.target.value)}
+          onChange={(e) => {
+            setNewLabel(e.target.value);
+            if (!codeTouched) setNewCode(e.target.value.trim() ? uniqueCode(e.target.value, usedCodes) : "");
+          }}
           placeholder="Nueva categoría (ej.: Mocasines)"
           className="field"
+          disabled={!supabase}
+        />
+        <input
+          value={newCode}
+          onChange={(e) => {
+            setCodeTouched(true);
+            setNewCode(normalizeCode(e.target.value));
+          }}
+          placeholder="COD"
+          maxLength={4}
+          aria-label="Código de la nueva categoría"
+          title="Código para los productos (2 a 4 letras o números)"
+          className="field w-20 shrink-0 px-2 text-center font-mono uppercase tracking-wider"
           disabled={!supabase}
         />
         <button disabled={!supabase || busy || !newLabel.trim()} className="btn min-h-12 shrink-0 bg-ink px-4 text-ivory">
@@ -149,6 +184,18 @@ export function CategoriesPanel() {
                   {!c.active && " · Oculta"}
                 </p>
               </div>
+              <input
+                defaultValue={c.code ?? ""}
+                key={c.code}
+                disabled={!supabase}
+                maxLength={4}
+                onChange={(e) => (e.target.value = normalizeCode(e.target.value))}
+                onBlur={(e) => changeCode(c, e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+                aria-label={`Código de ${c.label}`}
+                title="Código de la categoría para los productos nuevos"
+                className="w-16 border border-line bg-white px-1 py-1 text-center font-mono text-xs uppercase tracking-wider focus:border-ink focus:outline-none"
+              />
               <button type="button" onClick={() => toggle(c)} disabled={!supabase} className="text-xs text-ink-soft underline underline-offset-4">
                 {c.active ? "Ocultar" : "Mostrar"}
               </button>
@@ -161,6 +208,7 @@ export function CategoriesPanel() {
       )}
       <p className="text-xs text-muted">
         Toca un nombre para renombrarlo. El orden de esta lista es el orden en que aparecen en la tienda. El enlace de cada categoría no cambia al renombrarla.
+        El código (ej.: TAC) es el inicio del código de los productos nuevos de esa categoría; los productos que ya existen conservan el suyo.
       </p>
     </div>
   );

@@ -57,6 +57,15 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 - En `/admin` cada color es un bloque con fotos y tallas; "Copiar tallas de…" copia la cuadrícula de otro color.
 - Base de datos: ejecuta `supabase/migrations/005_variantes_color.sql` **antes** de desplegar esta versión. Los productos existentes quedan con un color que conserva sus fotos y su inventario.
 
+## Código interno (SKU)
+
+- Formato `CATEGORÍA-MODELO-COLOR-TALLA`, por ejemplo `TAC-0012-NEG-37`.
+- **Categoría:** código de 2 a 4 caracteres, editable en `/admin → Categorías` (aplica a los productos nuevos).
+- **Modelo:** consecutivo global que asigna la base de datos al crear el producto. No cambia aunque se renombre o se mueva de categoría.
+- **Color:** se sugiere del nombre (Negro → `NEG`) y se puede ajustar antes de guardar; después queda fijo.
+- Cada renglón de pedido guarda su código completo; se ve en el panel de pedidos y en el PDF. En `/admin → Productos` se puede buscar por código.
+- Base de datos: ejecuta `supabase/migrations/006_codigos.sql` antes de desplegar esta versión.
+
 ## Pedidos
 
 - Cuando la clienta toca "Enviar pedido por WhatsApp", el pedido se guarda en la tabla `orders` con un número (`FS-0001`) que va en el mensaje. Nombres, precios y existencias se toman de la base de datos.

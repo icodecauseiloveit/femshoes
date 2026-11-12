@@ -15,15 +15,15 @@ export const store = {
   paymentMethods: ["Transferencia bancaria", "Nequi", "Daviplata", "Pago contra entrega"],
 } as const;
 
-export type Category = { slug: string; label: string; sortOrder: number; active: boolean };
+export type Category = { slug: string; label: string; sortOrder: number; active: boolean; code?: string };
 
 /** Categorías de ejemplo (se usan mientras Supabase no esté conectado). En producción se editan en /admin. */
 export const defaultCategories: Category[] = [
-  { slug: "tacones", label: "Tacones", sortOrder: 1, active: true },
-  { slug: "sandalias", label: "Sandalias", sortOrder: 2, active: true },
-  { slug: "botas", label: "Botas", sortOrder: 3, active: true },
-  { slug: "planos", label: "Planos", sortOrder: 4, active: true },
-  { slug: "tenis", label: "Tenis", sortOrder: 5, active: true },
+  { slug: "tacones", label: "Tacones", sortOrder: 1, active: true, code: "TAC" },
+  { slug: "sandalias", label: "Sandalias", sortOrder: 2, active: true, code: "SAN" },
+  { slug: "botas", label: "Botas", sortOrder: 3, active: true, code: "BOT" },
+  { slug: "planos", label: "Planos", sortOrder: 4, active: true, code: "PLA" },
+  { slug: "tenis", label: "Tenis", sortOrder: 5, active: true, code: "TEN" },
 ];
 
 export type CategorySlug = string;

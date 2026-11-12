@@ -9,7 +9,7 @@ import { CategoriesPanel } from "./categories-panel";
 import { formatCOP } from "@/lib/format";
 import { sampleProducts } from "@/lib/sample-products";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { fromRow, totalStock, type Product, type ProductRow } from "@/lib/types";
+import { fromRow, skuOf, totalStock, type Product, type ProductRow } from "@/lib/types";
 import { ProductImage } from "../product-image";
 import { isRole, permissions, roleLabel, type Role } from "@/lib/roles";
 import { OrdersPanel } from "./orders-panel";
@@ -397,7 +397,14 @@ function ProductList({
 }) {
   const { categories } = useAdminCategories();
   const [q, setQ] = useState("");
-  const list = products.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+  // Busca por nombre o por código (TAC-0012, NEG…)
+  const term = q.trim().toLowerCase();
+  const list = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(term) ||
+      (p.code ?? "").toLowerCase().includes(term) ||
+      p.variants.some((v) => skuOf(p.code, v.code, "").toLowerCase().includes(term)),
+  );
 
   return (
     <div>
@@ -405,7 +412,7 @@ function ProductList({
         <h1 className="text-3xl">Productos <span className="text-lg text-muted">({products.length})</span></h1>
         <button onClick={onNew} className="btn min-h-10 bg-ink px-4 text-ivory">+ Nuevo</button>
       </div>
-      <input placeholder="Buscar producto…" value={q} onChange={(e) => setQ(e.target.value)} className="field mt-4" />
+      <input placeholder="Buscar por nombre o código…" value={q} onChange={(e) => setQ(e.target.value)} className="field mt-4" />
       <ul className="mt-4 divide-y divide-line border-y border-line">
         {list.map((p) => {
           const stock = totalStock(p);
@@ -416,6 +423,7 @@ function ProductList({
               </button>
               <button onClick={() => onEdit(p)} className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium">{p.name}</p>
+                {p.code && <p className="font-mono text-[0.7rem] tracking-wider text-ink-soft">{p.code}</p>}
                 <p className="text-xs text-muted">
                   {categoryLabel(p.category, categories)} · {formatCOP(p.price)}
                 </p>
