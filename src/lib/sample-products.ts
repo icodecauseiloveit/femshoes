@@ -1,4 +1,6 @@
-import type { Product, SizeStock } from "./types";
+import { legacyVariants, withSummary, type Product, type ProductColor, type ProductInput, type SizeStock } from "./types";
+
+type Sample = Omit<ProductInput, "variants"> & { id: string; colors: ProductColor[]; sizes: SizeStock[]; images: string[] };
 
 // Productos de ejemplo que se muestran mientras Supabase no esté conectado.
 const sizes = (stock: Record<number, number>): SizeStock[] =>
@@ -6,7 +8,7 @@ const sizes = (stock: Record<number, number>): SizeStock[] =>
 
 const imgs = (slug: string) => [`/products/${slug}-1.svg`, `/products/${slug}-2.svg`];
 
-export const sampleProducts: Product[] = [
+const samples: Sample[] = [
   {
     id: "ej-1",
     slug: "stiletto-noir",
@@ -178,3 +180,24 @@ export const sampleProducts: Product[] = [
     active: true,
   },
 ];
+
+export const sampleProducts: Product[] = samples.map(({ colors, sizes, images, ...rest }) => {
+  const variants = legacyVariants(colors, sizes, images);
+  // Ejemplo de un modelo con dos colores, cada uno con sus fotos y tallas
+  if (rest.slug === "stiletto-noir") {
+    variants.push({
+      id: "v2",
+      color: "Nude",
+      hex: "#d4ae93",
+      images: imgs("pump-nude-satin"),
+      sizes: [
+        { size: 35, stock: 0 },
+        { size: 36, stock: 2 },
+        { size: 37, stock: 1 },
+        { size: 38, stock: 0 },
+        { size: 39, stock: 3 },
+      ],
+    });
+  }
+  return withSummary({ ...rest, variants });
+});

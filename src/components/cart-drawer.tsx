@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { store } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
-import { useCart, type CartItem } from "./cart-provider";
+import { colorSlug } from "@/lib/types";
+import { lineKey, useCart, type CartItem } from "./cart-provider";
 import { CloseIcon, MinusIcon, PlusIcon } from "./icons";
 import { ProductImage } from "./product-image";
 
@@ -60,7 +61,7 @@ export function CartDrawer() {
             )}
             <ul className="flex-1 divide-y divide-line overflow-y-auto px-4">
               {items.map((item) => (
-                <CartLine key={`${item.productId}-${item.size}`} item={item} onNavigate={close} />
+                <CartLine key={lineKey(item)} item={item} onNavigate={close} />
               ))}
             </ul>
             <div className="space-y-3 border-t border-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -82,9 +83,10 @@ export function CartDrawer() {
 
 export function CartLine({ item, onNavigate }: { item: CartItem; onNavigate?: () => void }) {
   const { setQty, remove } = useCart();
+  const key = lineKey(item);
   return (
     <li className="flex gap-4 py-4">
-      <Link href={`/producto/${item.slug}`} onClick={onNavigate} className="w-20 shrink-0">
+      <Link href={`/producto/${item.slug}${item.color ? `?color=${colorSlug(item.color)}` : ""}`} onClick={onNavigate} className="w-20 shrink-0">
         <ProductImage src={item.image} alt={item.name} sizes="80px" />
       </Link>
       <div className="flex flex-1 flex-col">
@@ -93,13 +95,12 @@ export function CartLine({ item, onNavigate }: { item: CartItem; onNavigate?: ()
           <p className="text-sm">{formatCOP(item.price * item.qty)}</p>
         </div>
         <p className="mt-1 text-xs text-muted">
-          Talla {item.size}
-          {item.color && ` · ${item.color}`}
+          {item.color && `${item.color} · `}Talla {item.size}
         </p>
         <div className="mt-auto flex items-center justify-between pt-2">
           <div className="flex items-center border border-line">
             <button
-              onClick={() => setQty(item.productId, item.size, item.qty - 1)}
+              onClick={() => setQty(key, item.qty - 1)}
               aria-label="Restar uno"
               className="p-2"
             >
@@ -107,7 +108,7 @@ export function CartLine({ item, onNavigate }: { item: CartItem; onNavigate?: ()
             </button>
             <span className="w-6 text-center text-sm">{item.qty}</span>
             <button
-              onClick={() => setQty(item.productId, item.size, item.qty + 1)}
+              onClick={() => setQty(key, item.qty + 1)}
               disabled={item.qty >= item.maxQty}
               aria-label="Sumar uno"
               className="p-2 disabled:opacity-30"
@@ -116,7 +117,7 @@ export function CartLine({ item, onNavigate }: { item: CartItem; onNavigate?: ()
             </button>
           </div>
           <button
-            onClick={() => remove(item.productId, item.size)}
+            onClick={() => remove(key)}
             className="text-xs text-muted underline underline-offset-4"
           >
             Eliminar

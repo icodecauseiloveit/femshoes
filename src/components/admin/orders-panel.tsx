@@ -136,7 +136,7 @@ export function OrdersPanel({ role }: { role: Role }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{i.name}</p>
-                      <p className="text-xs text-muted">Talla {i.size}{i.color && ` · ${i.color}`}</p>
+                      <p className="text-xs text-ink-soft">{i.color && <span className="font-medium">{i.color} · </span>}Talla {i.size}</p>
                       {i.price !== undefined && <p className="text-xs text-muted">{formatCOP(i.price)} c/u</p>}
                     </div>
                     <p className="text-sm">

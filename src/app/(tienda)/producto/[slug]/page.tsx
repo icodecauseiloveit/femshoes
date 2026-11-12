@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AddToCart } from "@/components/add-to-cart";
 import { ProductCard } from "@/components/product-card";
-import { ProductGallery } from "@/components/product-gallery";
+import { VariantGallery } from "@/components/product-gallery";
+import { VariantProvider } from "@/components/variant-context";
 import { getCategories, getProductBySlug, getProducts } from "@/lib/catalog";
 import { categoryLabel, store } from "@/lib/config";
 import { discountPercent, formatCOP } from "@/lib/format";
@@ -47,8 +48,9 @@ async function ProductView({ params }: { params: Promise<{ slug: string }> }) {
 
   return (
     <div className="mx-auto max-w-6xl pb-16 md:pb-0">
+      <VariantProvider product={product}>
       <div className="md:grid md:grid-cols-[1.1fr_1fr] md:gap-10 md:px-5 md:pt-8">
-        <ProductGallery images={product.images} name={product.name} />
+        <VariantGallery />
 
         <div className="px-5 pt-5 md:px-0 md:pt-0">
           <nav className="eyebrow flex gap-2 text-[0.6rem] text-muted">
@@ -67,7 +69,7 @@ async function ProductView({ params }: { params: Promise<{ slug: string }> }) {
           </p>
           <p className="mt-1 text-xs text-muted">Impuestos incluidos · Envío calculado por WhatsApp</p>
 
-          <AddToCart product={product} />
+          <AddToCart />
 
           <div className="mt-8 divide-y divide-line border-y border-line">
             <Details title="Descripción" open>
@@ -82,6 +84,7 @@ async function ProductView({ params }: { params: Promise<{ slug: string }> }) {
           </div>
         </div>
       </div>
+      </VariantProvider>
 
       {suggestions.length > 0 && (
         <section className="mt-16 px-5">

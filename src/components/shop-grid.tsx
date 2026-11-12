@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { allSizes, categoryLabel, type Category } from "@/lib/config";
-import type { Product } from "@/lib/types";
+import { colorSlug, type Product } from "@/lib/types";
 import { CloseIcon } from "./icons";
 import { ProductCard } from "./product-card";
 
@@ -27,6 +27,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
   const category = params.get("categoria") ?? "";
   const filter = params.get("filtro") ?? "";
   const size = Number(params.get("talla")) || 0;
+  const color = params.get("color") ?? "";
   const sort = params.get("orden") ?? "destacados";
 
   function update(key: string, value: string) {
@@ -48,14 +49,33 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       if (category && p.category !== category) return false;
       if (filter === "nuevos" && !p.isNew) return false;
       if (filter === "ofertas" && !(p.compareAtPrice && p.compareAtPrice > p.price)) return false;
-      if (size && !p.sizes.some((s) => s.size === size && s.stock > 0)) return false;
+      // Con color y talla: ese color debe tener esa talla disponible
+      const variants = color ? p.variants.filter((v) => colorSlug(v.color) === color) : p.variants;
+      if (color && variants.length === 0) return false;
+      if (size && !variants.some((v) => v.sizes.some((s) => s.size === size && s.stock > 0))) return false;
       return true;
     });
     if (sort === "precio-asc") r = [...r].sort((a, b) => a.price - b.price);
     if (sort === "precio-desc") r = [...r].sort((a, b) => b.price - a.price);
     if (sort === "destacados") r = [...r].sort((a, b) => Number(b.featured) - Number(a.featured));
     return r;
-  }, [products, category, filter, size, sort]);
+  }, [products, category, filter, size, color, sort]);
+
+  // Colores disponibles en el catálogo (agrupados por nombre), los más comunes primero
+  const colorOptions = useMemo(() => {
+    const map = new Map<string, { slug: string; name: string; hex: string; count: number }>();
+    for (const p of products) {
+      for (const v of p.variants) {
+        const slug = colorSlug(v.color);
+        if (!slug) continue;
+        const prev = map.get(slug);
+        if (prev) prev.count++;
+        else map.set(slug, { slug, name: v.color, hex: v.hex, count: 1 });
+      }
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "es"));
+  }, [products]);
+  const colorName = colorOptions.find((c) => c.slug === color)?.name;
 
   const title = category
     ? categoryLabel(category, categories)
@@ -64,7 +84,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       : filter === "ofertas"
         ? "Ofertas"
         : "Toda la colección";
-  const activeCount = (size ? 1 : 0) + (sort !== "destacados" ? 1 : 0);
+  const activeCount = (size ? 1 : 0) + (color ? 1 : 0) + (sort !== "destacados" ? 1 : 0);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -72,6 +92,14 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
         <h1 className="text-4xl md:text-5xl">{title}</h1>
         <p className="mt-1 text-sm text-muted">
           {list.length} {list.length === 1 ? "producto" : "productos"}
+          {colorName && (
+            <>
+              {" "}en <span className="text-ink-soft">{colorName}</span>{" "}
+              <button onClick={() => update("color", "")} className="underline underline-offset-4">
+                quitar
+              </button>
+            </>
+          )}
         </p>
       </div>
 
@@ -102,7 +130,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       {list.length === 0 ? (
         <div className="px-5 py-20 text-center">
           <p className="font-display text-2xl">No encontramos productos</p>
-          <p className="mt-2 text-sm text-muted">Prueba con otra talla o categoría.</p>
+          <p className="mt-2 text-sm text-muted">Prueba con otra talla, color o categoría.</p>
           <button onClick={() => router.replace(pathname)} className="btn mt-6 border border-ink">
             Limpiar filtros
           </button>
@@ -110,7 +138,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       ) : (
         <div className="grid grid-cols-2 gap-x-3 gap-y-8 px-5 pt-5 md:grid-cols-3 md:gap-x-5 lg:grid-cols-4">
           {list.map((p, i) => (
-            <ProductCard key={p.id} product={p} priority={i < 4} />
+            <ProductCard key={`${p.id}-${color}`} product={p} priority={i < 4} color={color || undefined} />
           ))}
         </div>
       )}
@@ -140,6 +168,26 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
                   ))}
                 </div>
               </div>
+              {colorOptions.length > 1 && (
+                <div>
+                  <p className="eyebrow mb-3">Color</p>
+                  <div className="flex flex-wrap gap-2">
+                    {colorOptions.map((c) => (
+                      <button
+                        key={c.slug}
+                        onClick={() => update("color", color === c.slug ? "" : c.slug)}
+                        aria-pressed={color === c.slug}
+                        className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-[0.8rem] transition ${
+                          color === c.slug ? "border-ink bg-ink text-ivory" : "border-line bg-white text-ink-soft"
+                        }`}
+                      >
+                        <span className="size-5 rounded-full ring-1 ring-black/15" style={{ background: c.hex }} />
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="eyebrow mb-3">Ordenar por</p>
                 <div className="space-y-2">
@@ -160,7 +208,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
             </div>
             <div className="flex gap-3 border-t border-line px-5 pt-4">
               <button
-                onClick={() => updateMany({ talla: "", orden: "" })}
+                onClick={() => updateMany({ talla: "", color: "", orden: "" })}
                 className="btn flex-1 border border-ink"
               >
                 Limpiar

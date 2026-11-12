@@ -12,7 +12,7 @@ export async function refreshCatalog() {
 }
 
 type CreateOrderInput = {
-  items: { productId: string; size: number; qty: number }[];
+  items: { productId: string; variantId: string; size: number; qty: number }[];
   customer: OrderCustomer;
 };
 
@@ -45,13 +45,20 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
       return { ok: false, error: "Completa tus datos de envío." };
     }
 
-    // Unir líneas repetidas (mismo producto y talla) para validar existencias correctamente
-    const merged = new Map<string, { productId: string; size: number; qty: number }>();
+    // Unir líneas repetidas (mismo modelo, color y talla) para validar existencias correctamente
+    const merged = new Map<string, { productId: string; variantId: string; size: number; qty: number }>();
     for (const i of input.items ?? []) {
-      if (typeof i.productId !== "string" || !Number.isInteger(i.size) || !Number.isInteger(i.qty) || i.qty <= 0) continue;
-      const key = `${i.productId}|${i.size}`;
+      if (
+        typeof i.productId !== "string" ||
+        typeof i.variantId !== "string" ||
+        !Number.isInteger(i.size) ||
+        !Number.isInteger(i.qty) ||
+        i.qty <= 0
+      )
+        continue;
+      const key = `${i.productId}|${i.variantId}|${i.size}`;
       const prev = merged.get(key);
-      merged.set(key, { productId: i.productId, size: i.size, qty: (prev?.qty ?? 0) + i.qty });
+      merged.set(key, { productId: i.productId, variantId: i.variantId, size: i.size, qty: (prev?.qty ?? 0) + i.qty });
     }
     const lines = [...merged.values()];
     if (lines.length === 0 || lines.length > 30) return { ok: false, error: "Tu bolsa está vacía." };
@@ -69,22 +76,27 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         issues.push("Un producto de tu bolsa ya no está disponible.");
         continue;
       }
-      const stock = p.sizes.find((s) => s.size === l.size)?.stock ?? 0;
+      const v = p.variants.find((x) => x.id === l.variantId);
+      if (!v) {
+        issues.push(`El color que elegiste de ${p.name} ya no está disponible.`);
+        continue;
+      }
+      const label = p.variants.length > 1 ? `${p.name} ${v.color}` : p.name;
+      const stock = v.sizes.find((s) => s.size === l.size)?.stock ?? 0;
       if (stock < l.qty) {
         issues.push(
-          stock === 0
-            ? `${p.name} talla ${l.size} se agotó.`
-            : `${p.name} talla ${l.size}: solo quedan ${stock}.`,
+          stock === 0 ? `${label} talla ${l.size} se agotó.` : `${label} talla ${l.size}: solo quedan ${stock}.`,
         );
         continue;
       }
       items.push({
         productId: p.id,
+        variantId: v.id,
         slug: p.slug,
         name: p.name,
-        image: p.images[0] ?? "",
+        image: v.images[0] ?? p.images[0] ?? "",
         size: l.size,
-        color: p.colors.map((x) => x.name).join(", "),
+        color: v.color,
         qty: Math.min(l.qty, 20),
         price: p.price,
       });

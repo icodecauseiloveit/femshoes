@@ -3,55 +3,89 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { store } from "@/lib/config";
-import { totalStock, type Product } from "@/lib/types";
+import { modelSizes, totalStock, variantStock } from "@/lib/types";
 import { useCart } from "./cart-provider";
 import { WhatsAppIcon } from "./icons";
+import { useVariant } from "./variant-context";
 
-export function AddToCart({ product }: { product: Product }) {
+export function AddToCart() {
   const { add } = useCart();
+  const { product, variant, select } = useVariant();
   const [size, setSize] = useState<number | null>(null);
   const [error, setError] = useState(false);
   const sizesRef = useRef<HTMLDivElement>(null);
-  const soldOut = totalStock(product) === 0;
-  const selected = product.sizes.find((s) => s.size === size);
-  const color = product.colors[0]?.name ?? "";
+
+  const modelSoldOut = totalStock(product) === 0;
+  const colorSoldOut = variantStock(variant) === 0;
+  const stockOf = (s: number) => variant.sizes.find((x) => x.size === s)?.stock ?? 0;
+  const selectedStock = size ? stockOf(size) : 0;
+  const multiColor = product.variants.length > 1;
+
+  function chooseColor(id: string) {
+    select(id);
+    const next = product.variants.find((v) => v.id === id);
+    // Si la talla elegida no hay en el nuevo color, se suelta
+    if (size && !(next?.sizes.find((x) => x.size === size)?.stock)) setSize(null);
+  }
 
   function handleAdd() {
-    if (!selected) {
+    if (!size || selectedStock === 0) {
       setError(true);
       sizesRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     add({
       productId: product.id,
+      variantId: variant.id,
       slug: product.slug,
       name: product.name,
       price: product.price,
-      size: selected.size,
-      color,
-      image: product.images[0] ?? "",
-      maxQty: selected.stock,
+      size,
+      color: variant.color,
+      image: variant.images[0] ?? product.images[0] ?? "",
+      maxQty: selectedStock,
     });
   }
 
   const askText = encodeURIComponent(
-    `Hola ${store.name}, quiero información sobre ${product.name}${size ? ` en talla ${size}` : ""}.`,
+    `Hola ${store.name}, quiero información sobre ${product.name}` +
+      `${multiColor ? ` en color ${variant.color}` : ""}${size ? ` talla ${size}` : ""}.`,
   );
 
   return (
     <div className="mt-6">
-      {product.colors.length > 0 && (
-        <div className="mb-5">
-          <p className="eyebrow mb-2">
-            Color: <span className="normal-case tracking-normal text-ink-soft">{product.colors.map((c) => c.name).join(", ")}</span>
-          </p>
-          <div className="flex gap-2">
-            {product.colors.map((c) => (
-              <span key={c.name} className="size-7 rounded-full ring-1 ring-black/15 ring-offset-2 ring-offset-ivory" style={{ background: c.hex }} />
-            ))}
-          </div>
+      <div className="mb-5">
+        <p className="eyebrow mb-2">
+          Color: <span className="normal-case tracking-normal text-ink-soft">{variant.color}</span>
+          {multiColor && colorSoldOut && <span className="ml-2 normal-case tracking-normal text-sale">· Agotado</span>}
+        </p>
+        <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Color">
+          {product.variants.map((v) => {
+            const active = v.id === variant.id;
+            const out = variantStock(v) === 0;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                aria-label={`${v.color}${out ? " (agotado)" : ""}`}
+                title={v.color}
+                disabled={!multiColor}
+                onClick={() => chooseColor(v.id)}
+                className={`relative size-9 overflow-hidden rounded-full ring-offset-2 ring-offset-ivory transition ${
+                  active ? "ring-2 ring-ink" : "ring-1 ring-black/15"
+                }`}
+                style={{ background: v.hex }}
+              >
+                {out && (
+                  <span aria-hidden className="absolute left-1/2 top-1/2 h-px w-[140%] -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-ink/70" />
+                )}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       <div ref={sizesRef} className="mb-2 flex scroll-mt-24 items-center justify-between">
         <p className={`eyebrow ${error ? "text-sale" : ""}`}>
@@ -62,18 +96,19 @@ export function AddToCart({ product }: { product: Product }) {
         </Link>
       </div>
       <div className="grid grid-cols-5 gap-2">
-        {product.sizes.map((s) => {
-          const out = s.stock === 0;
+        {modelSizes(product).map((s) => {
+          const out = stockOf(s) === 0;
           return (
             <button
-              key={s.size}
+              key={s}
               disabled={out}
+              aria-label={`Talla ${s}${out ? " agotada" : ""}`}
               onClick={() => {
-                setSize(s.size);
+                setSize(s);
                 setError(false);
               }}
               className={`relative h-12 border text-sm transition ${
-                size === s.size
+                size === s && !out
                   ? "border-ink bg-ink text-ivory"
                   : out
                     ? "border-line bg-transparent text-muted/60 line-through"
@@ -82,19 +117,24 @@ export function AddToCart({ product }: { product: Product }) {
                       : "border-line bg-white hover:border-ink"
               }`}
             >
-              {s.size}
+              {s}
             </button>
           );
         })}
       </div>
-      {selected && selected.stock <= 2 && (
-        <p className="mt-2 text-xs text-sale">¡Solo quedan {selected.stock}!</p>
+      {size && selectedStock > 0 && selectedStock <= 2 && (
+        <p className="mt-2 text-xs text-sale">
+          {selectedStock === 1 ? "¡Último par!" : `¡Últimos ${selectedStock} pares!`}
+        </p>
+      )}
+      {multiColor && colorSoldOut && !modelSoldOut && (
+        <p className="mt-2 text-xs text-muted">Este color está agotado. Elige otro color disponible.</p>
       )}
 
       {/* Botones fijos abajo en el celular */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-line bg-ivory/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-20 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0 md:pr-0">
-        <button onClick={handleAdd} disabled={soldOut} className="btn flex-1 bg-ink text-ivory hover:bg-ink-soft">
-          {soldOut ? "Agotado" : "Agregar a la bolsa"}
+        <button onClick={handleAdd} disabled={colorSoldOut} className="btn flex-1 bg-ink text-ivory hover:bg-ink-soft">
+          {modelSoldOut ? "Agotado" : colorSoldOut ? "Agotado en este color" : "Agregar a la bolsa"}
         </button>
       </div>
 

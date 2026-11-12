@@ -17,6 +17,7 @@ export function statusLabel(s: string) {
 
 export type OrderItem = {
   productId: string;
+  variantId?: string; // pedidos anteriores a los colores no lo tienen
   slug: string;
   name: string;
   image: string;

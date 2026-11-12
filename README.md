@@ -49,6 +49,14 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 - No se puede eliminar una categoría que tenga productos; se puede ocultar.
 - Base de datos: ejecuta `supabase/migrations/004_categorias.sql`.
 
+## Colores (variantes)
+
+- Cada modelo se publica una vez y tiene uno o más colores. Cada color tiene su nombre, su tono, **sus propias fotos** y **sus pares por talla**. El precio es del modelo.
+- En la ficha, al elegir un color cambian las fotos y las tallas disponibles; el enlace recuerda el color (`/producto/regina?color=nude`). En el catálogo, los círculos de color cambian la foto y hay filtro por color.
+- El carrito, el pedido, el mensaje de WhatsApp y el PDF llevan el color y la foto de ese color. Al confirmar un pedido se descuenta el stock del color y la talla exactos.
+- En `/admin` cada color es un bloque con fotos y tallas; "Copiar tallas de…" copia la cuadrícula de otro color.
+- Base de datos: ejecuta `supabase/migrations/005_variantes_color.sql` **antes** de desplegar esta versión. Los productos existentes quedan con un color que conserva sus fotos y su inventario.
+
 ## Pedidos
 
 - Cuando la clienta toca "Enviar pedido por WhatsApp", el pedido se guarda en la tabla `orders` con un número (`FS-0001`) que va en el mensaje. Nombres, precios y existencias se toman de la base de datos.

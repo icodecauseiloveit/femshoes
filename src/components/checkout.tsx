@@ -8,7 +8,7 @@ import { createOrder } from "@/app/actions";
 import { orderCode } from "@/lib/orders";
 import { buildOrderMessage, whatsappUrl, type CustomerData } from "@/lib/whatsapp";
 import { CartLine } from "./cart-drawer";
-import { useCart } from "./cart-provider";
+import { lineKey, useCart } from "./cart-provider";
 import { WhatsAppIcon } from "./icons";
 
 const CUSTOMER_KEY = "femshoes-customer-v1";
@@ -58,7 +58,7 @@ export function Checkout() {
     const tab = window.open("", "_blank");
 
     const res = await createOrder({
-      items: items.map((i) => ({ productId: i.productId, size: i.size, qty: i.qty })),
+      items: items.map((i) => ({ productId: i.productId, variantId: i.variantId, size: i.size, qty: i.qty })),
       customer,
     });
     setSending(false);
@@ -168,7 +168,7 @@ export function Checkout() {
           <h2 className="text-2xl">Resumen</h2>
           <ul className="divide-y divide-line">
             {items.map((item) => (
-              <CartLine key={`${item.productId}-${item.size}`} item={item} />
+              <CartLine key={lineKey(item)} item={item} />
             ))}
           </ul>
           <dl className="space-y-2 border-t border-line pt-4 text-sm">

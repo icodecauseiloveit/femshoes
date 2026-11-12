@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ProductImage } from "./product-image";
+import { useVariant } from "./variant-context";
 
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
   const [index, setIndex] = useState(0);
@@ -67,4 +68,12 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
       )}
     </div>
   );
+}
+
+/** Galería del color elegido en la ficha del producto. */
+export function VariantGallery() {
+  const { product, variant } = useVariant();
+  const images = variant.images.length ? variant.images : product.images;
+  const name = product.variants.length > 1 ? `${product.name} ${variant.color}` : product.name;
+  return <ProductGallery key={variant.id} images={images} name={name} />;
 }
