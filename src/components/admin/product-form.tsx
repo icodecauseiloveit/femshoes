@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { refreshCatalog } from "@/app/actions";
-import { allSizes } from "@/lib/config";
+import { allSizes, defaultSizes, defaultStock } from "@/lib/config";
 import { useAdminCategories } from "./use-categories";
 import { slugify } from "@/lib/format";
 import { getSupabase, PRODUCT_IMAGES_BUCKET } from "@/lib/supabase";
@@ -27,7 +27,14 @@ type Props = {
   onSaved: () => void;
 };
 
-const blankVariant = (hex = "#141210"): ProductVariant => ({ id: newVariantId(), color: "", hex, images: [], sizes: [] });
+// Cada color nuevo arranca con tallas 35 a 40 y 20 pares por talla (se pueden cambiar)
+const blankVariant = (hex = "#141210"): ProductVariant => ({
+  id: newVariantId(),
+  color: "",
+  hex,
+  images: [],
+  sizes: defaultSizes.map((size) => ({ size, stock: defaultStock })),
+});
 
 const blank: ProductInput = {
   slug: "",
@@ -374,19 +381,12 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
 
   function toggleSize(size: number) {
     if (v.sizes.some((s) => s.size === size)) onChange({ sizes: v.sizes.filter((s) => s.size !== size) });
-    else setStock(size, 1);
+    else setStock(size, defaultStock);
   }
 
   return (
     <div className="space-y-4 border border-line bg-white p-3" data-testid="variant">
       <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={v.hex}
-          onChange={(e) => onChange({ hex: e.target.value })}
-          className="h-12 w-12 shrink-0 cursor-pointer border border-line-strong bg-white p-1"
-          aria-label="Tono del color"
-        />
         <input
           placeholder={`Nombre del color ${index + 1} (ej.: Negro)`}
           value={v.color}
@@ -408,6 +408,7 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
           className={`field w-20 shrink-0 px-2 text-center font-mono uppercase tracking-wider ${locked ? "bg-mist text-ink-soft" : ""}`}
         />
       </div>
+      <HexInput value={v.hex} onChange={(hex) => onChange({ hex })} label={`Tono HEX del color ${index + 1}`} />
       <p className="-mt-2 text-xs text-muted">
         Código de un par: <span className="font-mono text-ink-soft">{skuOf(productCode, v.code || "???", exampleSize)}</span>
         {locked && " · fijo"}
@@ -554,6 +555,56 @@ function PhotoGrid({
         {uploading ? "Subiendo…" : <>+ Agregar<br />fotos</>}
         <input type="file" accept="image/*" multiple hidden onChange={(e) => onUpload(e.target.files)} />
       </label>
+    </div>
+  );
+}
+
+/** Acepta "#d9b9a0", "d9b9a0", "#D9B" o "  #d9b9a0; " (pegado) y devuelve "#d9b9a0", o null si no es un HEX. */
+function parseHex(text: string): string | null {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text.trim().replace(/[;,\s]+$/, ""));
+  if (!m) return null;
+  const h = m[1].toLowerCase();
+  return `#${h.length === 3 ? h.split("").map((c) => c + c).join("") : h}`;
+}
+
+/** Tono del color en HEX: se escribe o se pega el código y se ve la muestra al lado. */
+function HexInput({ value, onChange, label }: { value: string; onChange: (hex: string) => void; label: string }) {
+  const [text, setText] = useState(value);
+  const valid = parseHex(text);
+
+  function update(raw: string) {
+    setText(raw);
+    const hex = parseHex(raw);
+    if (hex) onChange(hex);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        aria-hidden
+        className="h-12 w-12 shrink-0 border border-line-strong"
+        style={{ background: valid ?? value }}
+      />
+      <label className="flex-1">
+        <span className="sr-only">{label}</span>
+        <input
+          value={text}
+          onChange={(e) => update(e.target.value)}
+          onBlur={() => setText(valid ?? value)}
+          placeholder="#000000"
+          inputMode="text"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          maxLength={12}
+          aria-label={label}
+          aria-invalid={!valid}
+          className={`field font-mono uppercase tracking-wider ${valid ? "" : "border-sale"}`}
+        />
+      </label>
+      <span className={`w-24 shrink-0 text-xs ${valid ? "text-muted" : "text-sale"}`}>
+        {valid ? "HEX" : "Ej.: #D9B9A0"}
+      </span>
     </div>
   );
 }

@@ -30,6 +30,10 @@ export type CategorySlug = string;
 
 export const allSizes = [34, 35, 36, 37, 38, 39, 40, 41];
 
+/** Tallas y pares que trae cada color nuevo en /admin (editables). */
+export const defaultSizes = [35, 36, 37, 38, 39, 40];
+export const defaultStock = 20;
+
 export function categoryLabel(slug: string, list: Category[] = defaultCategories) {
   return list.find((c) => c.slug === slug)?.label ?? slug;
 }
