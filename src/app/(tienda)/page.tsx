@@ -1,16 +1,26 @@
 import Link from "next/link";
 import { ArrowIcon, ReturnIcon, ShieldIcon, TruckIcon } from "@/components/icons";
+import { HeroSlider, type HeroSlide } from "@/components/hero-slider";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
 import { getCategories, getProducts } from "@/lib/catalog";
 import { store } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
+import { defaultVariant, variantCover } from "@/lib/types";
 
 export default async function HomePage() {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
   const featured = products.filter((p) => p.featured).slice(0, 8);
   const newIn = products.filter((p) => p.isNew).slice(0, 8);
-  const hero = featured[0] ?? products[0];
+  // Portada: todos los destacados en carrusel (si no hay, el producto más reciente)
+  const heroProducts = featured.length ? featured : products.slice(0, 1);
+  const slides: HeroSlide[] = heroProducts.map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    price: p.price,
+    compareAtPrice: p.compareAtPrice,
+    image: variantCover(p, defaultVariant(p)),
+  }));
 
   return (
     <>
@@ -34,11 +44,7 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-          {hero && (
-            <Link href={`/producto/${hero.slug}`} className="order-1 block md:order-2">
-              <ProductImage src={hero.images[0]} alt={hero.name} priority sizes="(min-width: 768px) 50vw, 100vw" className="aspect-[5/4] md:aspect-[4/5]" />
-            </Link>
-          )}
+          <HeroSlider slides={slides} />
         </div>
       </section>
 
