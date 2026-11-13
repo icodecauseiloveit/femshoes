@@ -15,7 +15,7 @@ function loadImage(src: string): Promise<string | null> {
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext("2d")!;
-        ctx.fillStyle = "#f1e9df";
+        ctx.fillStyle = "#f6f6f6";
         ctx.fillRect(0, 0, w, h);
         const iw = img.naturalWidth || w, ih = img.naturalHeight || h;
         const scale = Math.max(w / iw, h / ih);
@@ -100,7 +100,7 @@ export async function downloadOrderPdf(order: OrderView) {
     const img = images[idx];
     if (img) doc.addImage(img, "JPEG", col.img, y, 24, 30);
     else {
-      doc.setFillColor(241, 233, 223);
+      doc.setFillColor(246, 246, 246);
       doc.rect(col.img, y, 24, 30, "F");
     }
     const mid = y + 16;

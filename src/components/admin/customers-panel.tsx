@@ -146,7 +146,7 @@ export function CustomersPanel({ openId, onOpen }: { openId: string | null; onOp
                   <span className="block text-xs text-muted">{formatPhone(c.phone)}{c.city && ` · ${c.city}`}</span>
                   {c.tags.length > 0 && (
                     <span className="mt-1 flex flex-wrap gap-1">
-                      {c.tags.map((t) => <span key={t} className="eyebrow bg-sand px-1.5 py-0.5 text-[0.55rem]">{t}</span>)}
+                      {c.tags.map((t) => <span key={t} className="eyebrow bg-mist px-1.5 py-0.5 text-[0.55rem]">{t}</span>)}
                     </span>
                   )}
                 </span>

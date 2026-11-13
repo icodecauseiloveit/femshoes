@@ -133,7 +133,7 @@ export function OrdersReportButton() {
               </div>
 
               {error && <p className="text-sm text-sale">{error}</p>}
-              {result && <p className="border border-gold/40 bg-sand p-3 text-sm">{result}</p>}
+              {result && <p className="border border-gold/40 bg-mist p-3 text-sm">{result}</p>}
 
               <button onClick={generate} disabled={busy} className="btn w-full bg-ink text-ivory">
                 {busy ? "Generando…" : "Generar PDF"}

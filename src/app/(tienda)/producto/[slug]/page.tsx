@@ -115,11 +115,11 @@ function Details({ title, children, open }: { title: string; children: React.Rea
 function ProductSkeleton() {
   return (
     <div className="mx-auto max-w-6xl animate-pulse md:grid md:grid-cols-[1.1fr_1fr] md:gap-10 md:px-5 md:pt-8">
-      <div className="aspect-[4/5] bg-sand" />
+      <div className="aspect-[4/5] bg-mist" />
       <div className="space-y-3 px-5 pt-5 md:px-0">
-        <div className="h-3 w-24 bg-sand" />
-        <div className="h-9 w-2/3 bg-sand" />
-        <div className="h-5 w-28 bg-sand" />
+        <div className="h-3 w-24 bg-mist" />
+        <div className="h-9 w-2/3 bg-mist" />
+        <div className="h-5 w-28 bg-mist" />
       </div>
     </div>
   );

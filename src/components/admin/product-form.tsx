@@ -375,7 +375,7 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
           maxLength={4}
           title={locked ? "El código ya se guardó y no cambia" : "Código del color (2 a 4 letras o números)"}
           aria-label={`Código del color ${index + 1}`}
-          className={`field w-20 shrink-0 px-2 text-center font-mono uppercase tracking-wider ${locked ? "bg-sand text-ink-soft" : ""}`}
+          className={`field w-20 shrink-0 px-2 text-center font-mono uppercase tracking-wider ${locked ? "bg-mist text-ink-soft" : ""}`}
         />
       </div>
       <p className="-mt-2 text-xs text-muted">

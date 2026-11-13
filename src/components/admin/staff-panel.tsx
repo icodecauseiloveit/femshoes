@@ -77,7 +77,7 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
         />
       )}
 
-      {notice && <p className="border border-gold/40 bg-sand p-3 text-sm">{notice}</p>}
+      {notice && <p className="border border-gold/40 bg-mist p-3 text-sm">{notice}</p>}
       {error && <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">{error}</p>}
 
       {loading ? (

@@ -122,7 +122,7 @@ export function CategoriesPanel() {
       </h1>
 
       {!supabase && (
-        <p className="border border-gold/40 bg-sand p-3 text-sm">Modo de ejemplo: conecta Supabase para editar las categorías.</p>
+        <p className="border border-gold/40 bg-mist p-3 text-sm">Modo de ejemplo: conecta Supabase para editar las categorías.</p>
       )}
 
       <form onSubmit={add} className="flex gap-2">
@@ -154,7 +154,7 @@ export function CategoriesPanel() {
         </button>
       </form>
 
-      {notice && <p className="border border-gold/40 bg-sand p-3 text-sm">{notice}</p>}
+      {notice && <p className="border border-gold/40 bg-mist p-3 text-sm">{notice}</p>}
       {(error || loadError) && (
         <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">{error || loadError}</p>
       )}

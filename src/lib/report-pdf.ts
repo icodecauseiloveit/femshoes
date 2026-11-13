@@ -5,7 +5,7 @@ import { formatCOP } from "./format";
 import { orderCode, statusLabel } from "./orders";
 
 const INK: [number, number, number] = [20, 18, 16];
-const SAND: [number, number, number] = [241, 233, 223];
+const MIST: [number, number, number] = [246, 246, 246];
 const IVORY: [number, number, number] = [250, 247, 242];
 const MUTED: [number, number, number] = [110, 104, 98];
 
@@ -93,7 +93,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
       {
         content: `${orderCode(o.number)}   ·   ${dateTime.format(new Date(o.createdAt))}   ·   ${o.customer.name}   ·   ${o.customer.city}   ·   ${statusLabel(o.status)}`,
         colSpan: 7,
-        styles: { fillColor: SAND, fontStyle: "bold", fontSize: 8 },
+        styles: { fillColor: MIST, fontStyle: "bold", fontSize: 8 },
       },
     ]);
     for (const l of lines) {

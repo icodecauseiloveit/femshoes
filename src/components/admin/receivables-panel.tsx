@@ -68,7 +68,7 @@ export function ReceivablesPanel({ onOpenCustomer }: { onOpenCustomer: (id: stri
                 key={b}
                 onClick={() => setFilter(filter === b ? "" : b)}
                 aria-pressed={filter === b}
-                className={`border p-3 text-left ${filter === b ? "border-ink bg-sand" : "border-line bg-white"}`}
+                className={`border p-3 text-left ${filter === b ? "border-ink bg-mist" : "border-line bg-white"}`}
               >
                 <p className="text-[0.68rem] uppercase tracking-wider text-muted">{agingLabels[b]}</p>
                 <p className={`mt-1 text-base ${bucketTone[b]}`}>{formatCOP(data.buckets[b].balance)}</p>

@@ -15,7 +15,7 @@ export default async function HomePage() {
   return (
     <>
       {/* Portada */}
-      <section className="relative overflow-hidden bg-sand">
+      <section className="relative overflow-hidden bg-mist">
         <div className="mx-auto grid max-w-6xl md:grid-cols-2 md:items-center">
           <div className="animate-fade-up order-2 px-5 pb-10 pt-6 md:order-1 md:py-20">
             <p className="eyebrow text-gold">Nueva colección</p>

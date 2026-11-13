@@ -166,7 +166,7 @@ export function Checkout() {
       </div>
 
       <aside className="mt-10 md:mt-0">
-        <div className="bg-sand p-5">
+        <div className="bg-mist p-5">
           <h2 className="text-2xl">Resumen</h2>
           <ul className="divide-y divide-line">
             {items.map((item) => (

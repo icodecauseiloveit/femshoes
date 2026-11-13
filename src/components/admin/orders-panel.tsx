@@ -16,7 +16,7 @@ async function getToken() {
 }
 
 const statusStyle: Record<OrderStatus, string> = {
-  pendiente: "bg-sand text-ink-soft",
+  pendiente: "bg-mist text-ink-soft",
   confirmado: "bg-ink text-ivory",
   despachado: "bg-[#e3efe6] text-[#2f6b3f]",
   cancelado: "bg-sale/10 text-sale",

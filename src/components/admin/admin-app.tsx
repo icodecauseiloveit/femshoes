@@ -90,7 +90,7 @@ function DemoMode() {
 
   return (
     <div className="space-y-6">
-      <div className="border border-gold/40 bg-sand p-5 text-sm leading-relaxed">
+      <div className="border border-gold/40 bg-mist p-5 text-sm leading-relaxed">
         <p className="eyebrow text-gold">Modo de ejemplo</p>
         <p className="mt-2">
           La tienda está mostrando productos de ejemplo. Para administrar tus productos reales conecta Supabase:

@@ -25,7 +25,7 @@ export default function SizeGuidePage() {
       </p>
       <div className="mt-8 overflow-hidden border border-line">
         <table className="w-full text-center text-sm">
-          <thead className="eyebrow bg-sand text-[0.62rem]">
+          <thead className="eyebrow bg-mist text-[0.62rem]">
             <tr>
               <th className="py-3">Colombia</th>
               <th>Largo del pie</th>
