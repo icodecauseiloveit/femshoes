@@ -17,8 +17,6 @@ export default async function HomePage() {
   const slides: HeroSlide[] = heroProducts.map((p) => ({
     slug: p.slug,
     name: p.name,
-    price: p.price,
-    compareAtPrice: p.compareAtPrice,
     image: variantCover(p, defaultVariant(p)),
   }));
 
