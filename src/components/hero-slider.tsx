@@ -26,6 +26,9 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
     // Con "reducir movimiento" activo en el equipo, cambia sin animación de deslizamiento
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     el.scrollTo({ left: n * el.clientWidth, behavior: reduce ? "auto" : "smooth" });
+    // Se actualiza aquí y no solo al recibir el evento de scroll, que algunos navegadores
+    // demoran o no envían (pestaña en segundo plano, ahorro de energía)
+    setIndex(n);
   }, [slides.length]);
 
   // Avance automático y cíclico (después del último vuelve al primero)
