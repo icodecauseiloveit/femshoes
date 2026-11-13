@@ -6,8 +6,8 @@ import { orderCode, statusLabel } from "./orders";
 
 const INK: [number, number, number] = [20, 18, 16];
 const MIST: [number, number, number] = [246, 246, 246];
-const IVORY: [number, number, number] = [250, 247, 242];
-const MUTED: [number, number, number] = [110, 104, 98];
+const WHITE: [number, number, number] = [255, 255, 255];
+const MUTED: [number, number, number] = [110, 106, 102];
 
 const tz = "America/Bogota";
 const dateTime = new Intl.DateTimeFormat("es-CO", { timeZone: tz, day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -63,7 +63,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
     doc.text(`Estados: ${states}`, W - M, 17.5, { align: "right" });
-    doc.setDrawColor(225, 216, 205);
+    doc.setDrawColor(221, 221, 221);
     doc.line(M, 21.5, W - M, 21.5);
     // Pie de página
     doc.setFontSize(7);
@@ -74,8 +74,8 @@ export function buildOrdersReportPdf(report: OrdersReport) {
   const tableBase = {
     margin: { top: 26, left: M, right: M, bottom: 12 },
     theme: "plain" as const,
-    styles: { font: "helvetica", fontSize: 8, textColor: INK, cellPadding: { top: 1.6, bottom: 1.6, left: 2, right: 2 }, lineColor: [232, 225, 216] as [number, number, number], lineWidth: { bottom: 0.1 } },
-    headStyles: { fillColor: INK, textColor: IVORY, fontStyle: "bold" as const, fontSize: 7.5 },
+    styles: { font: "helvetica", fontSize: 8, textColor: INK, cellPadding: { top: 1.6, bottom: 1.6, left: 2, right: 2 }, lineColor: [229, 229, 229] as [number, number, number], lineWidth: { bottom: 0.1 } },
+    headStyles: { fillColor: INK, textColor: WHITE, fontStyle: "bold" as const, fontSize: 7.5 },
     didDrawPage: pageDecor,
   };
 
@@ -119,7 +119,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
   autoTable(doc, {
     ...tableBase,
     head: [
-      [{ content: "DETALLE POR PEDIDO", colSpan: 7, styles: { fillColor: IVORY, textColor: INK, fontSize: 10, cellPadding: { top: 0, bottom: 3, left: 0, right: 0 } } }],
+      [{ content: "DETALLE POR PEDIDO", colSpan: 7, styles: { fillColor: WHITE, textColor: INK, fontSize: 10, cellPadding: { top: 0, bottom: 3, left: 0, right: 0 } } }],
       ["Código", "Modelo", "Color", { content: "Talla", styles: { halign: "center" } }, { content: "Cant.", styles: { halign: "center" } }, { content: "Valor unit.", styles: { halign: "right" } }, { content: "Subtotal", styles: { halign: "right" } }],
     ],
     body: body.length
@@ -133,7 +133,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
         { content: formatCOP(totalValue), styles: { halign: "right" } },
       ],
     ],
-    footStyles: { fillColor: INK, textColor: IVORY, fontStyle: "bold", fontSize: 9 },
+    footStyles: { fillColor: INK, textColor: WHITE, fontStyle: "bold", fontSize: 9 },
     showFoot: "lastPage",
     columnStyles: { 0: { cellWidth: 38 }, 3: { cellWidth: 16 }, 4: { cellWidth: 16 }, 5: { cellWidth: 30 }, 6: { cellWidth: 32 } },
   });
@@ -148,7 +148,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
     ...tableBase,
     startY: sameRoom ? lastY + 10 : 26,
     head: [
-      [{ content: "CONSOLIDADO POR MODELO Y COLOR", colSpan: 7, styles: { fillColor: IVORY, textColor: INK, fontSize: 10, cellPadding: { top: 0, bottom: 3, left: 0, right: 0 } } }],
+      [{ content: "CONSOLIDADO POR MODELO Y COLOR", colSpan: 7, styles: { fillColor: WHITE, textColor: INK, fontSize: 10, cellPadding: { top: 0, bottom: 3, left: 0, right: 0 } } }],
       ["Código", "Modelo", "Color", { content: "Pedidos", styles: { halign: "center" } }, { content: "Pares", styles: { halign: "center" } }, { content: "Valor", styles: { halign: "right" } }, { content: "% del valor", styles: { halign: "right" } }],
     ],
     body: rows.length
@@ -170,7 +170,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
         { content: totalValue ? "100 %" : "—", styles: { halign: "right" } },
       ],
     ],
-    footStyles: { fillColor: INK, textColor: IVORY, fontStyle: "bold", fontSize: 9 },
+    footStyles: { fillColor: INK, textColor: WHITE, fontStyle: "bold", fontSize: 9 },
     showFoot: "lastPage",
     columnStyles: { 0: { cellWidth: 32 }, 3: { cellWidth: 20 }, 4: { cellWidth: 20 }, 5: { cellWidth: 34 }, 6: { cellWidth: 26 } },
   });

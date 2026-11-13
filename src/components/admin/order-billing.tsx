@@ -84,7 +84,7 @@ export function OrderBilling({ order, onChanged }: { order: OrderView; onChanged
   }
 
   return (
-    <div className="space-y-3 border-t border-line bg-ivory/60 p-4 text-sm" data-testid={`cobro-${code}`}>
+    <div className="space-y-3 border-t border-line bg-mist p-4 text-sm" data-testid={`cobro-${code}`}>
       <div className="flex items-center justify-between">
         <p className="eyebrow text-[0.62rem]">Cobro</p>
         <PaymentBadge total={f.total} paid={f.paid} />
@@ -102,7 +102,7 @@ export function OrderBilling({ order, onChanged }: { order: OrderView; onChanged
           </label>
           <div className="col-span-2 flex gap-2">
             <button type="button" onClick={() => setEditing(false)} className="btn min-h-10 flex-1 border border-line">Cancelar</button>
-            <button disabled={busy} className="btn min-h-10 flex-1 bg-ink text-ivory">Guardar</button>
+            <button disabled={busy} className="btn min-h-10 flex-1 bg-ink text-white">Guardar</button>
           </div>
         </form>
       ) : (
@@ -170,7 +170,7 @@ export function OrderBilling({ order, onChanged }: { order: OrderView; onChanged
             </label>
             <div className="col-span-2 flex gap-2">
               <button type="button" onClick={() => setPaying(false)} className="btn min-h-10 flex-1 border border-line">Cancelar</button>
-              <button disabled={busy} className="btn min-h-10 flex-1 bg-ink text-ivory">{busy ? "Guardando…" : "Guardar pago"}</button>
+              <button disabled={busy} className="btn min-h-10 flex-1 bg-ink text-white">{busy ? "Guardando…" : "Guardar pago"}</button>
             </div>
           </form>
         ) : (

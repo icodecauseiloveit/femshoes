@@ -26,7 +26,7 @@ export default async function HomePage() {
               Calzado femenino premium, diseñado para acompañarte con elegancia en cada momento.
             </p>
             <div className="mt-7 flex gap-3">
-              <Link href="/tienda" className="btn flex-1 bg-ink text-ivory md:flex-none">
+              <Link href="/tienda" className="btn flex-1 bg-ink text-white md:flex-none">
                 Comprar ahora
               </Link>
               <Link href="/tienda?filtro=nuevos" className="btn flex-1 border border-ink md:flex-none">
@@ -73,12 +73,12 @@ export default async function HomePage() {
 
       {/* Banner editorial */}
       <section className="mx-auto mt-14 max-w-6xl px-5">
-        <div className="bg-ink px-6 py-12 text-center text-ivory md:py-16">
+        <div className="bg-ink px-6 py-12 text-center text-white md:py-16">
           <p className="eyebrow text-nude">Hecho para durar</p>
           <p className="mx-auto mt-4 max-w-md font-display text-3xl leading-tight md:text-4xl">
             Materiales nobles, hormas cómodas y acabados impecables.
           </p>
-          <Link href="/tienda?filtro=ofertas" className="btn mt-7 border border-ivory/60 text-ivory hover:bg-ivory hover:text-ink">
+          <Link href="/tienda?filtro=ofertas" className="btn mt-7 border border-white/60 text-white hover:bg-white hover:text-ink">
             Ver ofertas
           </Link>
         </div>
@@ -133,7 +133,7 @@ function ProductRail({
 
 function Benefit({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="flex items-center gap-4 bg-ivory px-5 py-5">
+    <div className="flex items-center gap-4 bg-white px-5 py-5">
       <span className="text-gold">{icon}</span>
       <div>
         <p className="text-sm font-medium">{title}</p>

@@ -73,7 +73,7 @@ export function OrdersReportButton() {
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-label="Reporte de pedidos">
           <button aria-label="Cerrar" className="absolute inset-0 bg-ink/40" onClick={() => setOpen(false)} />
-          <div className="animate-fade-up absolute inset-x-0 bottom-0 max-h-[90vh] overflow-y-auto bg-ivory pb-[max(1rem,env(safe-area-inset-bottom))] md:inset-x-auto md:left-1/2 md:top-1/2 md:bottom-auto md:w-[28rem] md:-translate-x-1/2 md:-translate-y-1/2">
+          <div className="animate-fade-up absolute inset-x-0 bottom-0 max-h-[90vh] overflow-y-auto bg-white pb-[max(1rem,env(safe-area-inset-bottom))] md:inset-x-auto md:left-1/2 md:top-1/2 md:bottom-auto md:w-[28rem] md:-translate-x-1/2 md:-translate-y-1/2">
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <h2 className="text-2xl">Reporte de pedidos</h2>
               <button onClick={() => setOpen(false)} aria-label="Cerrar" className="-mr-2 p-2">
@@ -100,7 +100,7 @@ export function OrdersReportButton() {
                           setFrom(a);
                           setTo(b);
                         }}
-                        className={`rounded-full border px-3 py-1 text-[0.78rem] ${active ? "border-ink bg-ink text-ivory" : "border-line bg-white text-ink-soft"}`}
+                        className={`rounded-full border px-3 py-1 text-[0.78rem] ${active ? "border-ink bg-ink text-white" : "border-line-strong bg-white text-ink-soft"}`}
                       >
                         {r.label}
                       </button>
@@ -123,7 +123,7 @@ export function OrdersReportButton() {
                 <p className="eyebrow mb-2">Estados a incluir</p>
                 <div className="grid grid-cols-2 gap-2">
                   {orderStatuses.map((s) => (
-                    <label key={s.value} className="flex items-center gap-2 border border-line bg-white px-3 py-2.5 text-sm">
+                    <label key={s.value} className="flex items-center gap-2 border border-line-strong bg-white px-3 py-2.5 text-sm">
                       <input type="checkbox" checked={statuses.includes(s.value)} onChange={() => toggle(s.value)} className="size-4 accent-ink" />
                       {s.label}
                     </label>
@@ -135,7 +135,7 @@ export function OrdersReportButton() {
               {error && <p className="text-sm text-sale">{error}</p>}
               {result && <p className="border border-gold/40 bg-mist p-3 text-sm">{result}</p>}
 
-              <button onClick={generate} disabled={busy} className="btn w-full bg-ink text-ivory">
+              <button onClick={generate} disabled={busy} className="btn w-full bg-ink text-white">
                 {busy ? "Generando…" : "Generar PDF"}
               </button>
             </div>

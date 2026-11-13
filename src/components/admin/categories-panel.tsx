@@ -149,7 +149,7 @@ export function CategoriesPanel() {
           className="field w-20 shrink-0 px-2 text-center font-mono uppercase tracking-wider"
           disabled={!supabase}
         />
-        <button disabled={!supabase || busy || !newLabel.trim()} className="btn min-h-12 shrink-0 bg-ink px-4 text-ivory">
+        <button disabled={!supabase || busy || !newLabel.trim()} className="btn min-h-12 shrink-0 bg-ink px-4 text-white">
           Agregar
         </button>
       </form>
@@ -194,7 +194,7 @@ export function CategoriesPanel() {
                 onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
                 aria-label={`Código de ${c.label}`}
                 title="Código de la categoría para los productos nuevos"
-                className="w-16 border border-line bg-white px-1 py-1 text-center font-mono text-xs uppercase tracking-wider focus:border-ink focus:outline-none"
+                className="w-16 border border-line-strong bg-white px-1 py-1 text-center font-mono text-xs uppercase tracking-wider focus:border-ink focus:outline-none"
               />
               <button type="button" onClick={() => toggle(c)} disabled={!supabase} className="text-xs text-ink-soft underline underline-offset-4">
                 {c.active ? "Ocultar" : "Mostrar"}

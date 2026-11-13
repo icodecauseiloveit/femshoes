@@ -3,37 +3,37 @@ import { store, type Category } from "@/lib/config";
 
 export function Footer({ categories }: { categories: Category[] }) {
   return (
-    <footer className="mt-20 bg-ink text-ivory/80">
+    <footer className="mt-20 bg-ink text-white/80">
       <div className="mx-auto max-w-6xl px-5 py-12">
-        <p className="font-display text-3xl tracking-[0.08em] text-ivory">{store.name.toUpperCase()}</p>
+        <p className="font-display text-3xl tracking-[0.08em] text-white">{store.name.toUpperCase()}</p>
         <p className="mt-3 max-w-sm text-sm leading-relaxed">{store.description}</p>
 
         <div className="mt-10 grid grid-cols-2 gap-8 text-sm md:grid-cols-3">
           <div>
-            <p className="eyebrow mb-4 text-ivory">Comprar</p>
+            <p className="eyebrow mb-4 text-white">Comprar</p>
             <ul className="space-y-3">
               {categories.map((c) => (
                 <li key={c.slug}>
-                  <Link href={`/tienda?categoria=${c.slug}`} className="hover:text-ivory">{c.label}</Link>
+                  <Link href={`/tienda?categoria=${c.slug}`} className="hover:text-white">{c.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="eyebrow mb-4 text-ivory">Ayuda</p>
+            <p className="eyebrow mb-4 text-white">Ayuda</p>
             <ul className="space-y-3">
-              <li><Link href="/guia-de-tallas" className="hover:text-ivory">Guía de tallas</Link></li>
-              <li><Link href="/envios-y-cambios" className="hover:text-ivory">Envíos y cambios</Link></li>
-              <li><Link href="/tratamiento-de-datos" className="hover:text-ivory">Tratamiento de datos</Link></li>
+              <li><Link href="/guia-de-tallas" className="hover:text-white">Guía de tallas</Link></li>
+              <li><Link href="/envios-y-cambios" className="hover:text-white">Envíos y cambios</Link></li>
+              <li><Link href="/tratamiento-de-datos" className="hover:text-white">Tratamiento de datos</Link></li>
               <li>
-                <a href={`https://wa.me/${store.whatsapp}`} target="_blank" rel="noopener" className="hover:text-ivory">
+                <a href={`https://wa.me/${store.whatsapp}`} target="_blank" rel="noopener" className="hover:text-white">
                   WhatsApp {store.whatsappDisplay}
                 </a>
               </li>
             </ul>
           </div>
           <div>
-            <p className="eyebrow mb-4 text-ivory">Pagos</p>
+            <p className="eyebrow mb-4 text-white">Pagos</p>
             <ul className="space-y-3">
               {store.paymentMethods.map((m) => (
                 <li key={m}>{m}</li>
@@ -41,7 +41,7 @@ export function Footer({ categories }: { categories: Category[] }) {
             </ul>
           </div>
         </div>
-        <p className="mt-12 border-t border-ivory/15 pt-6 text-xs text-ivory/50">
+        <p className="mt-12 border-t border-white/15 pt-6 text-xs text-white/50">
           © {store.name} · Envíos a toda {store.country}
         </p>
       </div>

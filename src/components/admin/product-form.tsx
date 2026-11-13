@@ -261,7 +261,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-5xl">
           {error && <p className="mb-2 text-sm text-sale">{error}</p>}
-          <button disabled={saving || Boolean(uploading)} className="btn w-full bg-ink text-ivory">
+          <button disabled={saving || Boolean(uploading)} className="btn w-full bg-ink text-white">
             {saving ? "Guardando…" : "Guardar producto"}
           </button>
         </div>
@@ -354,7 +354,7 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
           type="color"
           value={v.hex}
           onChange={(e) => onChange({ hex: e.target.value })}
-          className="h-12 w-12 shrink-0 cursor-pointer border border-line bg-white p-1"
+          className="h-12 w-12 shrink-0 cursor-pointer border border-line-strong bg-white p-1"
           aria-label="Tono del color"
         />
         <input
@@ -437,7 +437,7 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
                 const src = others.find((o) => o.id === e.target.value);
                 if (src) onChange({ sizes: src.sizes.map((s) => ({ ...s })) });
               }}
-              className="max-w-[55%] border border-line bg-white px-2 py-1 text-xs"
+              className="max-w-[55%] border border-line-strong bg-white px-2 py-1 text-xs"
               aria-label="Copiar tallas de otro color"
             >
               <option value="">Copiar tallas de…</option>
@@ -462,7 +462,7 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
                     min={0}
                     value={stockFor(size)}
                     onChange={(e) => setStock(size, Number(e.target.value))}
-                    className="mt-1 w-full border border-line py-1 text-center"
+                    className="mt-1 w-full border border-line-strong py-1 text-center"
                     aria-label={`Pares ${v.color || `color ${index + 1}`} talla ${size}`}
                   />
                 )}

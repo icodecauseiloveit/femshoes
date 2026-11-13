@@ -59,7 +59,7 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
           Usuarios <span className="text-lg text-muted">({staff.length})</span>
         </h1>
         {!showForm && (
-          <button onClick={() => setShowForm(true)} className="btn min-h-10 bg-ink px-4 text-ivory">
+          <button onClick={() => setShowForm(true)} className="btn min-h-10 bg-ink px-4 text-white">
             + Nuevo
           </button>
         )}
@@ -101,7 +101,7 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
                   disabled={isMe}
                   onChange={(e) => changeRole(m, e.target.value as Role)}
                   aria-label={`Rol de ${m.email}`}
-                  className="border border-line bg-white px-2 py-2 text-sm disabled:opacity-60"
+                  className="border border-line-strong bg-white px-2 py-2 text-sm disabled:opacity-60"
                 >
                   {roles.map((r) => (
                     <option key={r.value} value={r.value}>{r.label}</option>
@@ -154,7 +154,7 @@ function NewStaffForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4 border border-line bg-ivory p-4">
+    <form onSubmit={submit} className="space-y-4 border border-line bg-white p-4">
       <p className="eyebrow">Nuevo usuario</p>
       <label className="block">
         <span className="mb-1 block text-xs text-ink-soft">Correo</span>
@@ -198,7 +198,7 @@ function NewStaffForm({
       {error && <p className="text-sm text-sale">{error}</p>}
       <div className="flex gap-3">
         <button type="button" onClick={onCancel} className="btn flex-1 border border-ink">Cancelar</button>
-        <button disabled={saving} className="btn flex-1 bg-ink text-ivory">{saving ? "Creando…" : "Crear usuario"}</button>
+        <button disabled={saving} className="btn flex-1 bg-ink text-white">{saving ? "Creando…" : "Crear usuario"}</button>
       </div>
     </form>
   );

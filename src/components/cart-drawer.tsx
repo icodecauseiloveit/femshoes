@@ -26,7 +26,7 @@ export function CartDrawer() {
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-label="Carrito">
       <button aria-label="Cerrar carrito" className="absolute inset-0 bg-ink/40" onClick={close} />
-      <aside className="animate-slide-in absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-ivory">
+      <aside className="animate-slide-in absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white">
         <div className="flex h-14 items-center justify-between border-b border-line px-4">
           <h2 className="text-2xl">Tu bolsa</h2>
           <button onClick={close} aria-label="Cerrar carrito" className="-mr-2 p-2">
@@ -38,7 +38,7 @@ export function CartDrawer() {
           <div className="flex flex-1 flex-col items-center justify-center gap-5 px-8 text-center">
             <p className="font-display text-2xl">Tu bolsa está vacía</p>
             <p className="text-sm text-muted">Descubre nuestra colección y encuentra tu próximo par favorito.</p>
-            <Link href="/tienda" onClick={close} className="btn bg-ink text-ivory">
+            <Link href="/tienda" onClick={close} className="btn bg-ink text-white">
               Ver colección
             </Link>
           </div>
@@ -70,7 +70,7 @@ export function CartDrawer() {
                 <span className="font-medium">{formatCOP(subtotal)}</span>
               </div>
               <p className="text-xs text-muted">El costo de envío se confirma por WhatsApp.</p>
-              <Link href="/carrito" onClick={close} className="btn w-full bg-ink text-ivory">
+              <Link href="/carrito" onClick={close} className="btn w-full bg-ink text-white">
                 Finalizar pedido
               </Link>
             </div>
@@ -98,7 +98,7 @@ export function CartLine({ item, onNavigate }: { item: CartItem; onNavigate?: ()
           {item.color && `${item.color} · `}Talla {item.size}
         </p>
         <div className="mt-auto flex items-center justify-between pt-2">
-          <div className="flex items-center border border-line">
+          <div className="flex items-center border border-line-strong">
             <button
               onClick={() => setQty(key, item.qty - 1)}
               aria-label="Restar uno"

@@ -161,7 +161,7 @@ function Login({ notice = "" }: { notice?: string }) {
             <p className="text-sm text-ink-soft">Escribe tu correo y te enviaremos un enlace para crear una contraseña nueva.</p>
             <input type="email" required autoComplete="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} className="field" />
             {error && <p className="text-sm text-sale">{error}</p>}
-            <button disabled={loading} className="btn w-full bg-ink text-ivory">
+            <button disabled={loading} className="btn w-full bg-ink text-white">
               {loading ? "Enviando…" : "Enviar enlace"}
             </button>
           </>
@@ -179,7 +179,7 @@ function Login({ notice = "" }: { notice?: string }) {
       <input type="email" required autoComplete="email" placeholder="Correo" value={email} onChange={(e) => setEmail(e.target.value)} className="field" />
       <input type="password" required autoComplete="current-password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} className="field" />
       {error && <p className="text-sm text-sale">{error}</p>}
-      <button disabled={loading} className="btn w-full bg-ink text-ivory">
+      <button disabled={loading} className="btn w-full bg-ink text-white">
         {loading ? "Entrando…" : "Entrar"}
       </button>
       <button type="button" onClick={() => switchMode("forgot")} className="block w-full text-center text-sm underline underline-offset-4">
@@ -224,7 +224,7 @@ function ResetPassword({ onDone }: { onDone: () => void }) {
       <input type="password" required minLength={8} autoComplete="new-password" placeholder="Contraseña nueva" value={password} onChange={(e) => setPassword(e.target.value)} className="field" />
       <input type="password" required minLength={8} autoComplete="new-password" placeholder="Repite la contraseña" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="field" />
       {error && <p className="text-sm text-sale">{error}</p>}
-      <button disabled={loading} className="btn w-full bg-ink text-ivory">
+      <button disabled={loading} className="btn w-full bg-ink text-white">
         {loading ? "Guardando…" : "Guardar y entrar"}
       </button>
     </form>
@@ -424,7 +424,7 @@ function ProductList({
     <div>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-3xl">Productos <span className="text-lg text-muted">({products.length})</span></h1>
-        <button onClick={onNew} className="btn min-h-10 bg-ink px-4 text-ivory">+ Nuevo</button>
+        <button onClick={onNew} className="btn min-h-10 bg-ink px-4 text-white">+ Nuevo</button>
       </div>
       <input placeholder="Buscar por nombre o código…" value={q} onChange={(e) => setQ(e.target.value)} className="field mt-4" />
       <ul className="mt-4 divide-y divide-line border-y border-line">

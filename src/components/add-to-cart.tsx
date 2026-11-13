@@ -73,7 +73,7 @@ export function AddToCart() {
                 title={v.color}
                 disabled={!multiColor}
                 onClick={() => chooseColor(v.id)}
-                className={`relative size-9 overflow-hidden rounded-full ring-offset-2 ring-offset-ivory transition ${
+                className={`relative size-9 overflow-hidden rounded-full ring-offset-2 ring-offset-white transition ${
                   active ? "ring-2 ring-ink" : "ring-1 ring-black/15"
                 }`}
                 style={{ background: v.hex }}
@@ -109,12 +109,12 @@ export function AddToCart() {
               }}
               className={`relative h-12 border text-sm transition ${
                 size === s && !out
-                  ? "border-ink bg-ink text-ivory"
+                  ? "border-ink bg-ink text-white"
                   : out
                     ? "border-line bg-transparent text-muted/60 line-through"
                     : error
                       ? "border-sale/60 bg-white"
-                      : "border-line bg-white hover:border-ink"
+                      : "border-line-strong bg-white hover:border-ink"
               }`}
             >
               {s}
@@ -132,8 +132,8 @@ export function AddToCart() {
       )}
 
       {/* Botones fijos abajo en el celular */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-line bg-ivory/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-20 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0 md:pr-0">
-        <button onClick={handleAdd} disabled={colorSoldOut} className="btn flex-1 bg-ink text-ivory hover:bg-ink-soft">
+      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-line bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-20 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0 md:pr-0">
+        <button onClick={handleAdd} disabled={colorSoldOut} className="btn flex-1 bg-ink text-white hover:bg-ink-soft">
           {modelSoldOut ? "Agotado" : colorSoldOut ? "Agotado en este color" : "Agregar a la bolsa"}
         </button>
       </div>
@@ -142,7 +142,7 @@ export function AddToCart() {
         href={`https://wa.me/${store.whatsapp}?text=${askText}`}
         target="_blank"
         rel="noopener"
-        className="btn mt-3 w-full border border-line bg-white text-ink-soft"
+        className="btn mt-3 w-full border border-line-strong bg-white text-ink-soft"
       >
         <WhatsAppIcon width={18} height={18} className="text-[#25D366]" /> Preguntar por WhatsApp
       </a>

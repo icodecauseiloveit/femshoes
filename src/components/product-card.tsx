@@ -35,7 +35,7 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
             className="transition duration-500 group-hover:opacity-90"
           />
           <div className="absolute left-2 top-2 flex flex-col gap-1">
-            {product.isNew && <span className="eyebrow bg-ivory/90 px-2 py-1 text-[0.6rem]">Nuevo</span>}
+            {product.isNew && <span className="eyebrow bg-white/90 px-2 py-1 text-[0.6rem]">Nuevo</span>}
             {off > 0 && <span className="eyebrow bg-sale px-2 py-1 text-[0.6rem] text-white">-{off}%</span>}
           </div>
           {soldOut ? (
@@ -45,7 +45,7 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
           ) : (
             multiColor &&
             variantStock(variant) === 0 && (
-              <span className="eyebrow absolute inset-x-0 bottom-0 bg-ivory/90 py-2 text-center text-[0.6rem]">
+              <span className="eyebrow absolute inset-x-0 bottom-0 bg-white/90 py-2 text-center text-[0.6rem]">
                 Agotado en {variant.color}
               </span>
             )
@@ -75,7 +75,7 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
                 className="grid size-7 place-items-center"
               >
                 <span
-                  className={`size-3.5 rounded-full ring-offset-1 ring-offset-ivory ${active ? "ring-1 ring-ink" : "ring-1 ring-black/10"}`}
+                  className={`size-3.5 rounded-full ring-offset-1 ring-offset-white ${active ? "ring-1 ring-ink" : "ring-1 ring-black/10"}`}
                   style={{ background: v.hex }}
                 />
               </button>

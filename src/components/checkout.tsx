@@ -117,7 +117,7 @@ export function Checkout() {
       <div className="mx-auto max-w-md px-5 py-24 text-center">
         <h1 className="text-4xl">Tu bolsa está vacía</h1>
         <p className="mt-3 text-sm text-muted">Agrega tus favoritos para hacer tu pedido.</p>
-        <Link href="/tienda" className="btn mt-7 bg-ink text-ivory">
+        <Link href="/tienda" className="btn mt-7 bg-ink text-white">
           Ver colección
         </Link>
       </div>

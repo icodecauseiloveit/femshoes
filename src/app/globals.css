@@ -3,13 +3,14 @@
 @theme {
   --color-ink: #141210;
   --color-ink-soft: #3d3833;
-  --color-muted: #8a817a;
-  --color-ivory: #faf7f2;
+  --color-muted: #6e6a66; /* gris legible sobre blanco y mist (≥ 4,5:1) */
+  --color-white: #ffffff;
   --color-mist: #f6f6f6;
-  --color-line: #e6ddd2;
+  --color-line: #e2e2e2;
+  --color-line-strong: #bdbdbd; /* bordes de campos de formulario */
   --color-nude: #d9b9a0;
   --color-nude-dark: #b8927a;
-  --color-gold: #a8834f;
+  --color-gold: #866535; /* dorado más profundo para que el texto se lea sobre blanco */
   --color-sale: #9b3b2f;
 
   --font-sans: "Jost Variable", ui-sans-serif, system-ui, sans-serif;
@@ -39,7 +40,7 @@
     scroll-behavior: smooth;
   }
   body {
-    background: var(--color-ivory);
+    background: var(--color-white);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 350;
@@ -84,8 +85,8 @@
 
 @utility field {
   width: 100%;
-  border: 1px solid var(--color-line);
-  background: white;
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-white);
   padding: 0.75rem 0.9rem;
   outline: none;
   transition: border-color 0.2s;

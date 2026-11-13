@@ -104,7 +104,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       </div>
 
       {/* Chips de categoría (deslizables en móvil) */}
-      <div className="sticky top-14 z-20 border-y border-line bg-ivory/95 backdrop-blur md:top-16">
+      <div className="sticky top-14 z-20 border-y border-line bg-white/95 backdrop-blur md:top-16">
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 py-3">
           <Chip active={!category && !filter} onClick={() => router.replace(pathname, { scroll: false })}>
             Todo
@@ -146,7 +146,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       {sheetOpen && (
         <div className="fixed inset-0 z-50" role="dialog" aria-label="Filtros">
           <button aria-label="Cerrar filtros" className="absolute inset-0 bg-ink/40" onClick={() => setSheetOpen(false)} />
-          <div className="animate-fade-up absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto bg-ivory pb-[max(1rem,env(safe-area-inset-bottom))] md:inset-x-auto md:right-0 md:top-0 md:max-h-none md:w-96">
+          <div className="animate-fade-up absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto bg-white pb-[max(1rem,env(safe-area-inset-bottom))] md:inset-x-auto md:right-0 md:top-0 md:max-h-none md:w-96">
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <h2 className="text-2xl">Filtrar y ordenar</h2>
               <button onClick={() => setSheetOpen(false)} aria-label="Cerrar" className="-mr-2 p-2">
@@ -161,7 +161,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
                     <button
                       key={s}
                       onClick={() => update("talla", size === s ? "" : String(s))}
-                      className={`h-11 border text-sm transition ${size === s ? "border-ink bg-ink text-ivory" : "border-line bg-white"}`}
+                      className={`h-11 border text-sm transition ${size === s ? "border-ink bg-ink text-white" : "border-line-strong bg-white"}`}
                     >
                       {s}
                     </button>
@@ -178,7 +178,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
                         onClick={() => update("color", color === c.slug ? "" : c.slug)}
                         aria-pressed={color === c.slug}
                         className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-[0.8rem] transition ${
-                          color === c.slug ? "border-ink bg-ink text-ivory" : "border-line bg-white text-ink-soft"
+                          color === c.slug ? "border-ink bg-ink text-white" : "border-line-strong bg-white text-ink-soft"
                         }`}
                       >
                         <span className="size-5 rounded-full ring-1 ring-black/15" style={{ background: c.hex }} />
@@ -213,7 +213,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
               >
                 Limpiar
               </button>
-              <button onClick={() => setSheetOpen(false)} className="btn flex-1 bg-ink text-ivory">
+              <button onClick={() => setSheetOpen(false)} className="btn flex-1 bg-ink text-white">
                 Ver {list.length}
               </button>
             </div>
@@ -229,7 +229,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`shrink-0 rounded-full border px-4 py-1.5 text-[0.8rem] transition ${
-        active ? "border-ink bg-ink text-ivory" : "border-line bg-white text-ink-soft"
+        active ? "border-ink bg-ink text-white" : "border-line-strong bg-white text-ink-soft"
       }`}
     >
       {children}

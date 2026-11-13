@@ -108,7 +108,7 @@ export function CustomersPanel({ openId, onOpen }: { openId: string | null; onOp
           <button
             key={s.id}
             onClick={() => setSegment(s.id)}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-[0.78rem] ${segment === s.id ? "border-ink bg-ink text-ivory" : "border-line bg-white text-ink-soft"}`}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-[0.78rem] ${segment === s.id ? "border-ink bg-ink text-white" : "border-line-strong bg-white text-ink-soft"}`}
           >
             {s.label}
           </button>
@@ -116,12 +116,12 @@ export function CustomersPanel({ openId, onOpen }: { openId: string | null; onOp
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {tags.length > 0 && (
-          <select value={tag} onChange={(e) => setTag(e.target.value)} aria-label="Filtrar por etiqueta" className="border border-line bg-white px-2 py-1.5">
+          <select value={tag} onChange={(e) => setTag(e.target.value)} aria-label="Filtrar por etiqueta" className="border border-line-strong bg-white px-2 py-1.5">
             <option value="">Todas las etiquetas</option>
             {tags.map((t) => <option key={t}>{t}</option>)}
           </select>
         )}
-        <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar clientas" className="border border-line bg-white px-2 py-1.5">
+        <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar clientas" className="border border-line-strong bg-white px-2 py-1.5">
           {sorts.map((s) => <option key={s.id} value={s.id}>Ordenar: {s.label}</option>)}
         </select>
       </div>
@@ -383,7 +383,7 @@ function CustomerForm({ c, onSaved }: { c: CustomerDetail; onSaved: () => void }
         <p className="mb-1 text-xs text-ink-soft">Etiquetas</p>
         <div className="flex flex-wrap gap-1.5">
           {f.tags.map((t) => (
-            <button key={t} type="button" onClick={() => set("tags", f.tags.filter((x) => x !== t))} className="eyebrow bg-ink px-2 py-1 text-[0.58rem] text-ivory" aria-label={`Quitar etiqueta ${t}`}>
+            <button key={t} type="button" onClick={() => set("tags", f.tags.filter((x) => x !== t))} className="eyebrow bg-ink px-2 py-1 text-[0.58rem] text-white" aria-label={`Quitar etiqueta ${t}`}>
               {t} ✕
             </button>
           ))}
@@ -400,7 +400,7 @@ function CustomerForm({ c, onSaved }: { c: CustomerDetail; onSaved: () => void }
       </div>
       <L text="Notas internas"><textarea rows={3} value={f.notes} onChange={(e) => set("notes", e.target.value)} className="field" placeholder="Preferencias, horarios de entrega, acuerdos…" /></L>
       {error && <p className="text-sm text-sale">{error}</p>}
-      <button disabled={busy} className="btn w-full bg-ink text-ivory">{busy ? "Guardando…" : "Guardar datos"}</button>
+      <button disabled={busy} className="btn w-full bg-ink text-white">{busy ? "Guardando…" : "Guardar datos"}</button>
     </form>
   );
 }

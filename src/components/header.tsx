@@ -22,12 +22,12 @@ export function Header({ categories }: { categories: Category[] }) {
       <Suspense fallback={null}>
         <CloseOnNavigate onNavigate={() => setMenuOpen(false)} />
       </Suspense>
-      <div className="eyebrow bg-ink py-2 text-center text-[0.62rem] text-ivory">
+      <div className="eyebrow bg-ink py-2 text-center text-[0.62rem] text-white">
         {store.freeShippingFrom > 0
           ? `Envío gratis desde ${formatCOP(store.freeShippingFrom)} · Toda Colombia`
           : `Envíos a toda ${store.country}`}
       </div>
-      <header className="sticky top-0 z-40 border-b border-line bg-ivory/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur">
         <div className="mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 md:h-16">
           <div className="flex items-center">
             <button
@@ -55,7 +55,7 @@ export function Header({ categories }: { categories: Category[] }) {
             <button onClick={open} aria-label="Abrir carrito" className="relative -mr-2 p-2">
               <BagIcon />
               {ready && count > 0 && (
-                <span className="absolute right-0.5 top-0.5 flex size-[18px] items-center justify-center rounded-full bg-ink text-[0.6rem] text-ivory">
+                <span className="absolute right-0.5 top-0.5 flex size-[18px] items-center justify-center rounded-full bg-ink text-[0.6rem] text-white">
                   {count}
                 </span>
               )}
@@ -71,7 +71,7 @@ export function Header({ categories }: { categories: Category[] }) {
             className="absolute inset-0 bg-ink/40"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="animate-slide-in-left absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col bg-ivory">
+          <aside className="animate-slide-in-left absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col bg-white">
             <div className="flex h-14 items-center justify-between border-b border-line px-4">
               <span className="font-display text-2xl tracking-[0.08em]">{store.name.toUpperCase()}</span>
               <button onClick={() => setMenuOpen(false)} aria-label="Cerrar menú" className="-mr-2 p-2">

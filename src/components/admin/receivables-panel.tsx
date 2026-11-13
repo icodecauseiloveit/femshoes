@@ -56,7 +56,7 @@ export function ReceivablesPanel({ onOpenCustomer }: { onOpenCustomer: (id: stri
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <div className="col-span-2 border border-ink bg-ink p-3 text-ivory">
+            <div className="col-span-2 border border-ink bg-ink p-3 text-white">
               <p className="text-[0.68rem] uppercase tracking-wider opacity-70">Total por cobrar</p>
               <p className="mt-1 text-2xl">{formatCOP(data.total)}</p>
               <p className="text-xs opacity-70">
@@ -71,7 +71,7 @@ export function ReceivablesPanel({ onOpenCustomer }: { onOpenCustomer: (id: stri
                 className={`border p-3 text-left ${filter === b ? "border-ink bg-mist" : "border-line bg-white"}`}
               >
                 <p className="text-[0.68rem] uppercase tracking-wider text-muted">{agingLabels[b]}</p>
-                <p className={`mt-1 text-base ${bucketTone[b]}`}>{formatCOP(data.buckets[b].balance)}</p>
+                <p className={`mt-1 text-base ${data.buckets[b].balance > 0 ? bucketTone[b] : "text-muted"}`}>{formatCOP(data.buckets[b].balance)}</p>
                 <p className="text-xs text-muted">{data.buckets[b].count} {data.buckets[b].count === 1 ? "pedido" : "pedidos"}</p>
               </button>
             ))}

@@ -17,7 +17,7 @@ async function getToken() {
 
 const statusStyle: Record<OrderStatus, string> = {
   pendiente: "bg-mist text-ink-soft",
-  confirmado: "bg-ink text-ivory",
+  confirmado: "bg-ink text-white",
   despachado: "bg-[#e3efe6] text-[#2f6b3f]",
   cancelado: "bg-sale/10 text-sale",
 };
@@ -90,7 +90,7 @@ export function OrdersPanel({ role, onOpenCustomer }: { role: Role; onOpenCustom
           <button
             key={s.value}
             onClick={() => setFilter(s.value)}
-            className={`shrink-0 rounded-full border px-4 py-1.5 text-[0.8rem] ${filter === s.value ? "border-ink bg-ink text-ivory" : "border-line bg-white text-ink-soft"}`}
+            className={`shrink-0 rounded-full border px-4 py-1.5 text-[0.8rem] ${filter === s.value ? "border-ink bg-ink text-white" : "border-line-strong bg-white text-ink-soft"}`}
           >
             {s.label}
           </button>
@@ -184,14 +184,14 @@ export function OrdersPanel({ role, onOpenCustomer }: { role: Role; onOpenCustom
                       value={o.status}
                       onChange={(e) => changeStatus(o, e.target.value as OrderStatus)}
                       aria-label={`Estado de ${orderCode(o.number)}`}
-                      className="border border-line bg-white px-2 py-2 text-sm"
+                      className="border border-line-strong bg-white px-2 py-2 text-sm"
                     >
                       {orderStatuses.map((s) => (
                         <option key={s.value} value={s.value}>{s.label}</option>
                       ))}
                     </select>
                   )}
-                  <button onClick={() => pdf(o)} disabled={pdfFor === o.id} className="btn min-h-10 bg-ink px-4 text-ivory">
+                  <button onClick={() => pdf(o)} disabled={pdfFor === o.id} className="btn min-h-10 bg-ink px-4 text-white">
                     {pdfFor === o.id ? "Generando…" : "PDF"}
                   </button>
                 </div>
