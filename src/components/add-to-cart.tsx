@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState } from "react";
 import { store } from "@/lib/config";
 import { modelSizes, totalStock, variantCover, variantStock } from "@/lib/types";
 import { useCart } from "./cart-provider";
 import { WhatsAppIcon } from "./icons";
+import { SizeGuideModal } from "./size-guide-modal";
 import { useVariant } from "./variant-context";
 
 export function AddToCart() {
@@ -13,6 +13,7 @@ export function AddToCart() {
   const { product, variant, select } = useVariant();
   const [size, setSize] = useState<number | null>(null);
   const [error, setError] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const sizesRef = useRef<HTMLDivElement>(null);
 
   const modelSoldOut = totalStock(product) === 0;
@@ -91,9 +92,9 @@ export function AddToCart() {
         <p className={`eyebrow ${error ? "text-sale" : ""}`}>
           {error ? "Selecciona tu talla" : `Talla${size ? `: ${size}` : ""}`}
         </p>
-        <Link href="/guia-de-tallas" className="text-xs text-muted underline underline-offset-4">
+        <button type="button" onClick={() => setGuideOpen(true)} className="text-xs text-muted underline underline-offset-4">
           Guía de tallas
-        </Link>
+        </button>
       </div>
       <div className="grid grid-cols-5 gap-2">
         {modelSizes(product).map((s) => {
@@ -122,6 +123,18 @@ export function AddToCart() {
           );
         })}
       </div>
+      <SizeGuideModal
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        color={variant.color}
+        sizes={modelSizes(product)}
+        stockOf={stockOf}
+        selected={size}
+        onSelect={(s) => {
+          setSize(s);
+          setError(false);
+        }}
+      />
       {size && selectedStock > 0 && selectedStock <= 2 && (
         <p className="mt-2 text-xs text-sale">
           {selectedStock === 1 ? "¡Último par!" : `¡Últimos ${selectedStock} pares!`}
