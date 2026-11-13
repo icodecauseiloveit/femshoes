@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { store } from "@/lib/config";
-import { modelSizes, totalStock, variantStock } from "@/lib/types";
+import { modelSizes, totalStock, variantCover, variantStock } from "@/lib/types";
 import { useCart } from "./cart-provider";
 import { WhatsAppIcon } from "./icons";
 import { useVariant } from "./variant-context";
@@ -42,7 +42,7 @@ export function AddToCart() {
       price: product.price,
       size,
       color: variant.color,
-      image: variant.images[0] ?? product.images[0] ?? "",
+      image: variantCover(product, variant),
       maxQty: selectedStock,
     });
   }

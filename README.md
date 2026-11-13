@@ -55,6 +55,7 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 - En la ficha, al elegir un color cambian las fotos y las tallas disponibles; el enlace recuerda el color (`/producto/regina?color=nude`). En el catálogo, los círculos de color cambian la foto y hay filtro por color.
 - El carrito, el pedido, el mensaje de WhatsApp y el PDF llevan el color y la foto de ese color. Al confirmar un pedido se descuenta el stock del color y la talla exactos.
 - En `/admin` cada color es un bloque con fotos y tallas; "Copiar tallas de…" copia la cuadrícula de otro color.
+- **Fotos generales del modelo:** se muestran con todos los colores, después de las del color elegido (suela, tacón, caja, fotos puestas). Cada foto tiene "Pasar a…" para moverla entre un color y las generales. Base de datos: `supabase/migrations/008_fotos_generales.sql`.
 - Base de datos: ejecuta `supabase/migrations/005_variantes_color.sql` **antes** de desplegar esta versión. Los productos existentes quedan con un color que conserva sus fotos y su inventario.
 
 ## Código interno (SKU)

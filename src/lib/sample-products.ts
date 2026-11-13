@@ -1,6 +1,6 @@
 import { legacyVariants, withSummary, type Product, type ProductColor, type ProductInput, type SizeStock } from "./types";
 
-type Sample = Omit<ProductInput, "variants"> & { id: string; colors: ProductColor[]; sizes: SizeStock[]; images: string[] };
+type Sample = Omit<ProductInput, "variants" | "sharedImages"> & { id: string; colors: ProductColor[]; sizes: SizeStock[]; images: string[] };
 
 // Productos de ejemplo que se muestran mientras Supabase no esté conectado.
 const sizes = (stock: Record<number, number>): SizeStock[] =>
@@ -199,5 +199,5 @@ export const sampleProducts: Product[] = samples.map(({ colors, sizes, images, .
       ],
     });
   }
-  return withSummary({ ...rest, variants });
+  return withSummary({ ...rest, variants, sharedImages: [] });
 });

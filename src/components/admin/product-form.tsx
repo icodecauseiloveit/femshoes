@@ -38,6 +38,7 @@ const blank: ProductInput = {
   price: 0,
   compareAtPrice: null,
   variants: [blankVariant()],
+  sharedImages: [],
   featured: false,
   isNew: true,
   active: true,
@@ -54,7 +55,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
       if (!v.code) used.push(code);
       return { ...v, code, images: [...v.images], sizes: v.sizes.map((x) => ({ ...x })) };
     });
-    return { ...rest, variants };
+    return { ...rest, variants, sharedImages: [...rest.sharedImages] };
   });
   const { categories } = useAdminCategories();
   // Códigos de color ya guardados: no se pueden cambiar
@@ -84,18 +85,20 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
     set("variants", list);
   }
 
-  async function upload(variantId: string, files: FileList | null) {
+  /** Sube fotos a un color o, con target "shared", a las fotos generales del modelo. */
+  async function upload(target: string, files: FileList | null) {
     if (!files?.length) return;
     const supabase = getSupabase();
     if (!supabase || demo) {
       setError("Conecta Supabase para subir fotos.");
       return;
     }
-    const variant = form.variants.find((v) => v.id === variantId);
-    setUploading(variantId);
+    const variant = form.variants.find((v) => v.id === target);
+    setUploading(target);
     setError("");
     const urls: string[] = [];
-    const folder = `${form.slug || slugify(form.name) || "producto"}/${slugify(variant?.color ?? "") || variantId}`;
+    const sub = target === "shared" ? "general" : slugify(variant?.color ?? "") || target;
+    const folder = `${form.slug || slugify(form.name) || "producto"}/${sub}`;
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${folder}/${crypto.randomUUID()}.${ext}`;
@@ -109,8 +112,25 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
       }
       urls.push(supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl);
     }
-    updateVariant(variantId, (v) => ({ images: [...v.images, ...urls] }));
+    if (target === "shared") setForm((f) => ({ ...f, sharedImages: [...f.sharedImages, ...urls] }));
+    else updateVariant(target, (v) => ({ images: [...v.images, ...urls] }));
     setUploading(null);
+  }
+
+  /** Pasa una foto de un color a las generales del modelo, o al revés. */
+  function moveImageTo(src: string, from: string, to: string) {
+    setForm((f) => {
+      const variants = f.variants.map((v) => {
+        let images = v.images;
+        if (v.id === from) images = images.filter((x) => x !== src);
+        if (v.id === to && !images.includes(src)) images = [...images, src];
+        return images === v.images ? v : { ...v, images };
+      });
+      let sharedImages = f.sharedImages;
+      if (from === "shared") sharedImages = sharedImages.filter((x) => x !== src);
+      if (to === "shared" && !sharedImages.includes(src)) sharedImages = [...sharedImages, src];
+      return { ...f, variants, sharedImages };
+    });
   }
 
   async function save(e: React.FormEvent) {
@@ -239,6 +259,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
             productCode={product?.code ?? `${categoryCode ?? "???"}-####`}
             onChange={(patch) => updateVariant(v.id, patch)}
             onUpload={(files) => upload(v.id, files)}
+            onMoveTo={(src, to) => moveImageTo(src, v.id, to)}
             onMove={(dir) => moveVariant(i, dir)}
             onRemove={() => set("variants", form.variants.filter((x) => x.id !== v.id))}
           />
@@ -250,6 +271,22 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
         >
           + Agregar otro color
         </button>
+      </Section>
+
+      <Section title="Fotos generales del modelo">
+        <p className="text-xs text-muted">
+          Se muestran con todos los colores, después de las fotos del color elegido: por ejemplo la suela, el tacón, la caja o
+          fotos puestas. Si un color no tiene fotos propias, su portada es la primera de aquí.
+        </p>
+        <PhotoGrid
+          images={form.sharedImages}
+          uploading={uploading === "shared"}
+          onChange={(sharedImages) => set("sharedImages", sharedImages)}
+          onUpload={(files) => upload("shared", files)}
+          moveTargets={form.variants.map((v) => ({ id: v.id, label: v.color || "(sin nombre)" }))}
+          onMoveTo={(src, to) => moveImageTo(src, "shared", to)}
+          testId="shared-photos"
+        />
       </Section>
 
       <Section title="Visibilidad">
@@ -310,12 +347,13 @@ type VariantEditorProps = {
   productCode: string;
   onChange: (patch: Partial<ProductVariant>) => void;
   onUpload: (files: FileList | null) => void;
+  onMoveTo: (src: string, to: string) => void;
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
 };
 
 /** Bloque de un color: nombre y tono, fotos y tallas con existencias. */
-function VariantEditor({ variant: v, index, total, others, uploading, locked, productCode, onChange, onUpload, onMove, onRemove }: VariantEditorProps) {
+function VariantEditor({ variant: v, index, total, others, uploading, locked, productCode, onChange, onUpload, onMoveTo, onMove, onRemove }: VariantEditorProps) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   // El código se sugiere a partir del nombre hasta que se escribe uno a mano
   const [codeTouched, setCodeTouched] = useState(Boolean(v.code));
@@ -337,14 +375,6 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
   function toggleSize(size: number) {
     if (v.sizes.some((s) => s.size === size)) onChange({ sizes: v.sizes.filter((s) => s.size !== size) });
     else setStock(size, 1);
-  }
-
-  function moveImage(i: number, dir: -1 | 1) {
-    const imgs = [...v.images];
-    const j = i + dir;
-    if (j < 0 || j >= imgs.length) return;
-    [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
-    onChange({ images: imgs });
   }
 
   return (
@@ -407,23 +437,15 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
 
       <div>
         <p className="mb-2 text-xs text-ink-soft">Fotos de este color</p>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {v.images.map((src, i) => (
-            <div key={src} className="relative">
-              <ProductImage src={src} alt="" sizes="120px" />
-              {i === 0 && <span className="eyebrow absolute left-1 top-1 bg-white px-1 text-[0.55rem]">Portada</span>}
-              <div className="mt-1 flex justify-between text-xs">
-                <button type="button" onClick={() => moveImage(i, -1)} className="px-1" aria-label="Mover foto a la izquierda">←</button>
-                <button type="button" onClick={() => onChange({ images: v.images.filter((x) => x !== src) })} className="text-sale">Quitar</button>
-                <button type="button" onClick={() => moveImage(i, 1)} className="px-1" aria-label="Mover foto a la derecha">→</button>
-              </div>
-            </div>
-          ))}
-          <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center border border-dashed border-ink/30 text-center text-xs text-muted">
-            {uploading ? "Subiendo…" : <>+ Agregar<br />fotos</>}
-            <input type="file" accept="image/*" multiple hidden onChange={(e) => onUpload(e.target.files)} />
-          </label>
-        </div>
+        <PhotoGrid
+          images={v.images}
+          uploading={uploading}
+          onChange={(images) => onChange({ images })}
+          onUpload={onUpload}
+          moveTargets={[{ id: "shared", label: "Fotos generales" }, ...others.map((o) => ({ id: o.id, label: o.color || "(sin nombre)" }))]}
+          onMoveTo={(src, to) => onMoveTo(src, to)}
+          coverLabel="Portada"
+        />
         <p className="mt-1 text-xs text-muted">Fotos verticales 4:5 (ej.: 1200×1500 px). La primera es la portada de este color.</p>
       </div>
 
@@ -471,6 +493,67 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Cuadrícula de fotos: ordenar, quitar, pasar a otro grupo y subir nuevas. */
+function PhotoGrid({
+  images,
+  uploading,
+  onChange,
+  onUpload,
+  moveTargets,
+  onMoveTo,
+  coverLabel,
+  testId,
+}: {
+  images: string[];
+  uploading: boolean;
+  onChange: (images: string[]) => void;
+  onUpload: (files: FileList | null) => void;
+  moveTargets: { id: string; label: string }[];
+  onMoveTo: (src: string, to: string) => void;
+  coverLabel?: string;
+  testId?: string;
+}) {
+  function move(i: number, dir: -1 | 1) {
+    const imgs = [...images];
+    const j = i + dir;
+    if (j < 0 || j >= imgs.length) return;
+    [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
+    onChange(imgs);
+  }
+  return (
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4" data-testid={testId}>
+      {images.map((src, i) => (
+        <div key={src} className="relative">
+          <ProductImage src={src} alt="" sizes="120px" />
+          {i === 0 && coverLabel && <span className="eyebrow absolute left-1 top-1 bg-white px-1 text-[0.55rem]">{coverLabel}</span>}
+          <div className="mt-1 flex justify-between text-xs">
+            <button type="button" onClick={() => move(i, -1)} className="px-1" aria-label="Mover foto a la izquierda">←</button>
+            <button type="button" onClick={() => onChange(images.filter((x) => x !== src))} className="text-sale">Quitar</button>
+            <button type="button" onClick={() => move(i, 1)} className="px-1" aria-label="Mover foto a la derecha">→</button>
+          </div>
+          {moveTargets.length > 0 && (
+            <select
+              value=""
+              onChange={(e) => e.target.value && onMoveTo(src, e.target.value)}
+              aria-label={`Pasar foto ${i + 1} a otro grupo`}
+              className="mt-1 w-full border border-line-strong bg-white px-1 py-1 text-[0.7rem] text-ink-soft"
+            >
+              <option value="">Pasar a…</option>
+              {moveTargets.map((t) => (
+                <option key={t.id} value={t.id}>{t.id === "shared" ? t.label : `Color ${t.label}`}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      ))}
+      <label className="flex aspect-[4/5] cursor-pointer flex-col items-center justify-center border border-dashed border-ink/30 text-center text-xs text-muted">
+        {uploading ? "Subiendo…" : <>+ Agregar<br />fotos</>}
+        <input type="file" accept="image/*" multiple hidden onChange={(e) => onUpload(e.target.files)} />
+      </label>
     </div>
   );
 }

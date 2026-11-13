@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { CATALOG_TAG } from "@/lib/catalog";
 import type { OrderCustomer, OrderItem } from "@/lib/orders";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { fromRow, skuOf, type ProductRow } from "@/lib/types";
+import { fromRow, skuOf, variantCover, type ProductRow } from "@/lib/types";
 
 /** Refresca el catálogo de la tienda después de guardar cambios en /admin. */
 export async function refreshCatalog() {
@@ -96,7 +96,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         ...(skuOf(p.code, v.code, l.size) ? { sku: skuOf(p.code, v.code, l.size) } : {}),
         slug: p.slug,
         name: p.name,
-        image: v.images[0] ?? p.images[0] ?? "",
+        image: variantCover(p, v),
         size: l.size,
         color: v.color,
         qty: Math.min(l.qty, 20),

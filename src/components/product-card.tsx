@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { discountPercent, formatCOP } from "@/lib/format";
-import { colorSlug, defaultVariant, totalStock, variantStock, type Product } from "@/lib/types";
+import { colorSlug, defaultVariant, totalStock, variantCover, variantStock, type Product } from "@/lib/types";
 import { ProductImage } from "./product-image";
 
 const MAX_SWATCHES = 5;
@@ -20,7 +20,7 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
   const off = discountPercent(product.price, product.compareAtPrice);
   const soldOut = totalStock(product) === 0;
   const href = multiColor ? `/producto/${product.slug}?color=${colorSlug(variant.color)}` : `/producto/${product.slug}`;
-  const image = variant.images[0] ?? product.images[0];
+  const image = variantCover(product, variant);
   const extra = product.variants.length - MAX_SWATCHES;
 
   return (
