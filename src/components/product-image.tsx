@@ -6,10 +6,11 @@ type Props = {
   sizes?: string;
   priority?: boolean;
   className?: string;
+  fit?: "cover" | "contain"; // contain: muestra la foto completa sin recortar
 };
 
 /** Imagen de producto en proporción 4:5. Las ilustraciones SVG de ejemplo no se optimizan. */
-export function ProductImage({ src, alt, sizes = "50vw", priority, className = "" }: Props) {
+export function ProductImage({ src, alt, sizes = "50vw", priority, className = "", fit = "cover" }: Props) {
   if (!src) {
     return <div className={`aspect-[4/5] w-full bg-mist ${className}`} aria-label={alt} />;
   }
@@ -22,7 +23,7 @@ export function ProductImage({ src, alt, sizes = "50vw", priority, className = "
         sizes={sizes}
         priority={priority}
         unoptimized={src.endsWith(".svg")}
-        className="object-cover"
+        className={fit === "contain" ? "object-contain" : "object-cover"}
       />
     </div>
   );

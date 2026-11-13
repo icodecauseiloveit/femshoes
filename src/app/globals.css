@@ -34,6 +34,12 @@
   }
 }
 
+/* Línea de progreso del carrusel de la portada */
+@keyframes hero-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;

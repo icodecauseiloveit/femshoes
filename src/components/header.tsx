@@ -33,11 +33,11 @@ export function Header({ categories }: { categories: Category[] }) {
             <button
               onClick={() => setMenuOpen(true)}
               aria-label="Abrir menú"
-              className="-ml-2 p-2 md:hidden"
+              className="-ml-2 p-2 lg:hidden"
             >
               <MenuIcon />
             </button>
-            <nav className="hidden gap-6 md:flex">
+            <nav className="hidden gap-6 lg:flex">
               <Link href="/tienda" className="eyebrow hover:text-gold">Tienda</Link>
               {categories.slice(0, 3).map((c) => (
                 <Link key={c.slug} href={`/tienda?categoria=${c.slug}`} className="eyebrow hover:text-gold">
@@ -65,7 +65,7 @@ export function Header({ categories }: { categories: Category[] }) {
       </header>
 
       {menuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <button
             aria-label="Cerrar menú"
             className="absolute inset-0 bg-ink/40"
