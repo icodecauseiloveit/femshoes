@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { listOrders, updateOrderStatus } from "@/app/admin/orders-actions";
+import { deleteOrder, listOrders, updateOrderStatus } from "@/app/admin/orders-actions";
 import { formatCOP } from "@/lib/format";
 import { orderCode, orderStatuses, statusLabel, type OrderStatus, type OrderView } from "@/lib/orders";
 import { getSupabase } from "@/lib/supabase";
 import { ProductImage } from "../product-image";
 import { OrderBilling, PaymentBadge } from "./order-billing";
 import { OrdersReportButton } from "./orders-report";
+import { ReasonDialog } from "./reason-dialog";
 
 async function getToken() {
   const { data } = await getSupabase()!.auth.getSession();
@@ -22,12 +23,39 @@ const statusStyle: Record<OrderStatus, string> = {
 };
 
 /** canManage: permiso "pedidos" (todo). Sin él, vista de despacho (solo confirmados, sin precios). */
-export function OrdersPanel({ canManage, onOpenCustomer }: { canManage: boolean; onOpenCustomer?: (id: string) => void }) {
+export function OrdersPanel({
+  canManage,
+  canDelete = false,
+  onOpenCustomer,
+}: {
+  canManage: boolean;
+  /** Solo superadmin: eliminar pedidos */
+  canDelete?: boolean;
+  onOpenCustomer?: (id: string) => void;
+}) {
   const [filter, setFilter] = useState<OrderStatus>(canManage ? "pendiente" : "confirmado");
   const [orders, setOrders] = useState<OrderView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pdfFor, setPdfFor] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<OrderView | null>(null);
+  const [restock, setRestock] = useState(true);
+  const [notice, setNotice] = useState("");
+
+  function askDelete(order: OrderView) {
+    // Confirmado: los pares siguen en bodega, se devuelven. Despachado: ya salieron, por defecto no.
+    setRestock(order.status === "confirmado");
+    setDeleting(order);
+  }
+
+  async function removeOrder(order: OrderView, reason: string) {
+    const applied = order.status === "confirmado" || order.status === "despachado";
+    const res = await deleteOrder(await getToken(), { id: order.id, reason, restock: applied && restock });
+    if (!res.ok) return res.error;
+    setDeleting(null);
+    setNotice(`Se eliminó el pedido ${orderCode(order.number)}${applied && restock ? " y se devolvieron los pares al inventario" : ""}.`);
+    load();
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,6 +127,7 @@ export function OrdersPanel({ canManage, onOpenCustomer }: { canManage: boolean;
         <p className="text-xs text-muted">Al confirmar un pedido se descuentan los pares del inventario; al cancelarlo se devuelven.</p>
       )}
 
+      {notice && <p className="border border-gold/40 bg-mist p-3 text-sm">{notice}</p>}
       {error && <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">{error}</p>}
 
       {loading ? (
@@ -194,10 +223,47 @@ export function OrdersPanel({ canManage, onOpenCustomer }: { canManage: boolean;
                     {pdfFor === o.id ? "Generando…" : "PDF"}
                   </button>
                 </div>
+                {canDelete && (
+                  <button onClick={() => askDelete(o)} className="w-full text-right text-xs text-sale underline underline-offset-4">
+                    Eliminar pedido
+                  </button>
+                )}
               </div>
             </li>
           ))}
         </ul>
+      )}
+      {deleting && (
+        <ReasonDialog
+          title={`Eliminar el pedido ${orderCode(deleting.number)}`}
+          description="Se borra de pedidos, de la cartera y de la ficha de la clienta. No se puede deshacer, pero queda una copia con el motivo."
+          confirmLabel="Eliminar pedido"
+          danger
+          onCancel={() => setDeleting(null)}
+          onConfirm={(reason) => removeOrder(deleting, reason)}
+        >
+          {(deleting.status === "confirmado" || deleting.status === "despachado") && (
+            <label className="flex items-start gap-3 border border-line bg-mist p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={restock}
+                onChange={(e) => setRestock(e.target.checked)}
+                className="mt-0.5 size-5 shrink-0 accent-ink"
+              />
+              <span>
+                Devolver {deleting.totalPairs} {deleting.totalPairs === 1 ? "par" : "pares"} al inventario
+                <span className="block text-xs text-muted">
+                  {deleting.status === "despachado"
+                    ? "Este pedido ya salió: márcalo solo si los zapatos regresaron a la bodega."
+                    : "El pedido está confirmado: los pares siguen en la bodega."}
+                </span>
+              </span>
+            </label>
+          )}
+          {deleting.finance && deleting.finance.paid > 0 && (
+            <p className="text-sm text-sale">Tiene {formatCOP(deleting.finance.paid)} en pagos registrados: también se borrarán.</p>
+          )}
+        </ReasonDialog>
       )}
     </div>
   );

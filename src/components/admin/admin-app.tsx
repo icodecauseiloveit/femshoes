@@ -317,7 +317,7 @@ function Dashboard({ email }: { email: string }) {
       {tabs.length === 0 && <p className="py-10 text-center text-sm text-muted">Tu rol todavía no tiene permisos. Pide a un superadmin que los asigne.</p>}
       {current?.id === "productos" && <ProductsPanel access={access} />}
       {current?.id === "categorias" && <CategoriesPanel />}
-      {current?.id === "pedidos" && <OrdersPanel canManage={can(access, "pedidos")} onOpenCustomer={can(access, "clientas") ? openCustomer : undefined} />}
+      {current?.id === "pedidos" && <OrdersPanel canManage={can(access, "pedidos")} canDelete={access.superadmin} onOpenCustomer={can(access, "clientas") ? openCustomer : undefined} />}
       {current?.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} />}
       {current?.id === "cartera" && <ReceivablesPanel onOpenCustomer={openCustomer} />}
       {current?.id === "usuarios" && <StaffPanel myEmail={myEmail} />}

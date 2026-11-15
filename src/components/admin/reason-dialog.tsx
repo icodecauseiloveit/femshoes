@@ -10,6 +10,7 @@ export function ReasonDialog({
   danger,
   onConfirm,
   onCancel,
+  children,
 }: {
   title: string;
   description?: string;
@@ -17,6 +18,8 @@ export function ReasonDialog({
   danger?: boolean;
   onConfirm: (reason: string) => Promise<string | void>;
   onCancel: () => void;
+  /** Contenido extra antes del motivo (avisos, opciones) */
+  children?: React.ReactNode;
 }) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -40,13 +43,17 @@ export function ReasonDialog({
       >
         <h2 className="text-2xl">{title}</h2>
         {description && <p className="text-sm text-ink-soft">{description}</p>}
+        {children}
         <label className="block">
           <span className="mb-1 block text-xs text-ink-soft">Motivo (queda en el historial)</span>
           <textarea
             autoFocus
             rows={3}
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => {
+              setReason(e.target.value);
+              if (error) setError("");
+            }}
             maxLength={500}
             className="field"
             placeholder="Ej.: modelo descontinuado por el fabricante"

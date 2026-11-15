@@ -10,7 +10,7 @@ import {
 } from "@/lib/orders";
 import type { Payment } from "@/lib/customers";
 import { financeOf, paymentsByOrder } from "@/lib/order-finance";
-import { can } from "@/lib/roles";
+import { SUPERADMIN, can } from "@/lib/roles";
 import { ActionError, requireAccess, run, type Result } from "@/lib/staff-auth";
 
 export type OrderRow = {
@@ -123,6 +123,33 @@ export async function updateOrderStatus(
     }
     // El inventario cambió: refrescar la tienda
     updateTag(CATALOG_TAG);
+    return undefined;
+  });
+}
+
+/**
+ * Elimina un pedido (solo superadmin). Si ya había descontado inventario y `restock` es true,
+ * devuelve los pares. Sus pagos se borran con él y queda una copia en order_deletions.
+ */
+export async function deleteOrder(
+  accessToken: string,
+  input: { id: string; reason: string; restock: boolean },
+): Promise<Result> {
+  return run(async () => {
+    const { admin, myEmail } = await requireAccess(accessToken, [SUPERADMIN]);
+    const reason = input.reason?.trim() ?? "";
+    if (!reason) throw new ActionError("Escribe el motivo de la eliminación.");
+    const { error } = await admin.rpc("delete_order", {
+      p_order_id: input.id,
+      p_reason: reason,
+      p_restock: Boolean(input.restock),
+      p_actor: myEmail,
+    });
+    if (error) {
+      if (/no encontrado/i.test(error.message)) throw new ActionError("Ese pedido ya no existe.");
+      throw error;
+    }
+    if (input.restock) updateTag(CATALOG_TAG);
     return undefined;
   });
 }
