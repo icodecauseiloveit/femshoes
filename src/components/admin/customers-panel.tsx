@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getCustomer, listCustomers, updateCustomer, type CustomerDetail } from "@/app/admin/customers-actions";
+import { deleteCustomer, getCustomer, listCustomers, updateCustomer, type CustomerDetail } from "@/app/admin/customers-actions";
 import {
   documentTypes,
   formatPhone,
@@ -15,6 +15,7 @@ import { orderCode, statusLabel } from "@/lib/orders";
 import { getSupabase } from "@/lib/supabase";
 import { WhatsAppIcon } from "../icons";
 import { OrderBilling, PaymentBadge } from "./order-billing";
+import { ReasonDialog } from "./reason-dialog";
 
 async function token() {
   const { data } = await getSupabase()!.auth.getSession();
@@ -45,7 +46,17 @@ const sorts: { id: Sort; label: string; fn: (a: CustomerSummary, b: CustomerSumm
   { id: "nombre", label: "Nombre", fn: (a, b) => a.name.localeCompare(b.name, "es") },
 ];
 
-export function CustomersPanel({ openId, onOpen }: { openId: string | null; onOpen: (id: string | null) => void }) {
+export function CustomersPanel({
+  openId,
+  onOpen,
+  canDelete = false,
+}: {
+  openId: string | null;
+  onOpen: (id: string | null) => void;
+  /** Solo superadmin: eliminar clientas */
+  canDelete?: boolean;
+}) {
+  const [deletedNotice, setDeletedNotice] = useState("");
   const [list, setList] = useState<CustomerSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -88,7 +99,20 @@ export function CustomersPanel({ openId, onOpen }: { openId: string | null; onOp
       .sort(sorts.find((s) => s.id === sort)!.fn);
   }, [list, q, segment, tag, sort]);
 
-  if (openId) return <CustomerView id={openId} onBack={() => (onOpen(null), load())} />;
+  if (openId) {
+    return (
+      <CustomerView
+        id={openId}
+        canDelete={canDelete}
+        onBack={() => (onOpen(null), load())}
+        onDeleted={(name) => {
+          setDeletedNotice(`Se eliminó la ficha de ${name}. Sus pedidos se conservan.`);
+          onOpen(null);
+          load();
+        }}
+      />
+    );
+  }
 
   const totals = shown.reduce((t, c) => ({ purchased: t.purchased + c.stats.purchased, balance: t.balance + c.stats.balance }), { purchased: 0, balance: 0 });
 
@@ -131,6 +155,7 @@ export function CustomersPanel({ openId, onOpen }: { openId: string | null; onOp
           <span className={totals.balance > 0 ? "text-sale" : ""}>{formatCOP(totals.balance)}</span>
         </p>
       )}
+      {deletedNotice && <p className="border border-gold/40 bg-mist p-3 text-sm">{deletedNotice}</p>}
       {error && <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">{error}</p>}
       {loading ? (
         <p className="py-10 text-center text-sm text-muted">Cargando clientas…</p>
@@ -189,7 +214,18 @@ function exportCsv(rows: CustomerSummary[]) {
 
 /* ---------------- Ficha de la clienta ---------------- */
 
-function CustomerView({ id, onBack }: { id: string; onBack: () => void }) {
+function CustomerView({
+  id,
+  onBack,
+  canDelete,
+  onDeleted,
+}: {
+  id: string;
+  onBack: () => void;
+  canDelete: boolean;
+  onDeleted: (name: string) => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [c, setC] = useState<CustomerDetail | null>(null);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
@@ -302,6 +338,35 @@ function CustomerView({ id, onBack }: { id: string; onBack: () => void }) {
           ))}
         </ul>
       </div>
+
+      {canDelete && (
+        <div className="border-t border-line pt-4 text-right">
+          <button onClick={() => setConfirmDelete(true)} className="text-xs text-sale underline underline-offset-4">
+            Eliminar clienta
+          </button>
+        </div>
+      )}
+      {confirmDelete && (
+        <ReasonDialog
+          title={`Eliminar a ${c.name || "esta clienta"}`}
+          description="Se borra su ficha: documento, correo, cumpleaños, etiquetas, notas y la autorización de mensajes. No se puede deshacer."
+          confirmLabel="Eliminar clienta"
+          danger
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async (reason) => {
+            const res = await deleteCustomer(await token(), { id: c.id, reason });
+            if (!res.ok) return res.error;
+            onDeleted(c.name || formatPhone(c.phone));
+          }}
+        >
+          {c.orders.length > 0 && (
+            <p className="border border-line bg-mist p-3 text-sm">
+              Sus {c.orders.length} {c.orders.length === 1 ? "pedido se conserva" : "pedidos se conservan"} con el nombre y celular de cada
+              pedido{s.balance > 0 ? ` y su saldo de ${formatCOP(s.balance)} sigue en la cartera` : ""}. Si vuelve a comprar, se crea una ficha nueva.
+            </p>
+          )}
+        </ReasonDialog>
+      )}
     </div>
   );
 }

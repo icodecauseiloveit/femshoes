@@ -34,6 +34,19 @@
   }
 }
 
+/* Marquesina de categorías: la lista va duplicada, así que mover -50% cierra el ciclo sin saltos */
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.marquee-track {
+  animation: marquee linear infinite;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
 /* Línea de progreso del carrusel de la portada */
 @keyframes hero-progress {
   from { width: 0%; }

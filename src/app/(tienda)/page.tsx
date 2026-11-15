@@ -2,11 +2,11 @@ import Link from "next/link";
 import { ArrowIcon, ReturnIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 import { HeroSlider, type HeroSlide } from "@/components/hero-slider";
 import { ProductCard } from "@/components/product-card";
-import { ProductImage } from "@/components/product-image";
 import { getCategories, getProducts } from "@/lib/catalog";
 import { store } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
 import { productCover } from "@/lib/types";
+import { CategoryMarquee } from "@/components/category-marquee";
 
 export default async function HomePage() {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
@@ -46,29 +46,20 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Categorías en carrusel horizontal */}
-      <section className="mx-auto max-w-6xl pt-12">
-        <div className="flex items-end justify-between px-5">
+      {/* Categorías en marquesina: se desplazan solas hacia la izquierda sin fin */}
+      <section className="pt-12">
+        <div className="mx-auto flex max-w-6xl items-end justify-between px-5">
           <h2 className="text-3xl">Categorías</h2>
           <Link href="/tienda" className="eyebrow flex items-center gap-1 text-ink-soft">
             Ver todo <ArrowIcon width={14} />
           </Link>
         </div>
-        <div className="no-scrollbar mt-5 flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-2">
-          {categories.map((c) => {
+        <CategoryMarquee
+          items={categories.map((c) => {
             const sample = products.find((p) => p.category === c.slug);
-            return (
-              <Link
-                key={c.slug}
-                href={`/tienda?categoria=${c.slug}`}
-                className="group w-[40%] shrink-0 snap-start md:w-[19%]"
-              >
-                <ProductImage src={sample ? productCover(sample) : undefined} alt={c.label} sizes="40vw" className="transition group-hover:opacity-90" />
-                <p className="mt-2 font-display text-xl">{c.label}</p>
-              </Link>
-            );
+            return { slug: c.slug, label: c.label, image: sample ? productCover(sample) : undefined };
           })}
-        </div>
+        />
       </section>
 
       {featured.length > 0 && (

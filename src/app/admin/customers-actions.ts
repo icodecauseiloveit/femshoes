@@ -13,6 +13,7 @@ import {
 } from "@/lib/customers";
 import { financeOf, paymentsByOrder, toPayment } from "@/lib/order-finance";
 import type { OrderItem, OrderStatus, OrderView } from "@/lib/orders";
+import { SUPERADMIN } from "@/lib/roles";
 import { ActionError, requireAccess, run, type Result } from "@/lib/staff-auth";
 import type { OrderRow } from "./orders-actions";
 
@@ -340,5 +341,23 @@ export async function getReceivables(accessToken: string): Promise<Result<Receiv
     rows.sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
     const total = rows.reduce((s, r) => s + r.balance, 0);
     return { rows, buckets, total, overdue: total - buckets["por-entregar"].balance };
+  });
+}
+
+/**
+ * Elimina la ficha de una clienta (solo superadmin). Sus pedidos se conservan sin vincular
+ * y siguen en la cartera; queda una constancia sin datos personales.
+ */
+export async function deleteCustomer(accessToken: string, input: { id: string; reason: string }): Promise<Result<null>> {
+  return run(async () => {
+    const { admin, myEmail } = await requireAccess(accessToken, [SUPERADMIN]);
+    const reason = input.reason?.trim() ?? "";
+    if (!reason) throw new ActionError("Escribe el motivo de la eliminación.");
+    const { error } = await admin.rpc("delete_customer", { p_customer_id: input.id, p_reason: reason, p_actor: myEmail });
+    if (error) {
+      if (/no encontrada/i.test(error.message)) throw new ActionError("Esa clienta ya no existe.");
+      throw error;
+    }
+    return null;
   });
 }
