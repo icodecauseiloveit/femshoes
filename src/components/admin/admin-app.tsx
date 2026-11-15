@@ -9,7 +9,7 @@ import { CategoriesPanel } from "./categories-panel";
 import { formatCOP } from "@/lib/format";
 import { sampleProducts } from "@/lib/sample-products";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { fromRow, skuOf, totalStock, type Product, type ProductRow } from "@/lib/types";
+import { fromRow, productCover, skuOf, totalStock, type Product, type ProductRow } from "@/lib/types";
 import { ProductImage } from "../product-image";
 import { can, type Access, type Permission } from "@/lib/roles";
 import { getMyAccess } from "@/app/admin/actions";
@@ -488,7 +488,7 @@ function ProductList({
           return (
             <li key={p.id} className="flex items-center gap-3 py-3">
               <button onClick={() => onEdit?.(p)} disabled={!onEdit} className="w-14 shrink-0">
-                <ProductImage src={p.images[0]} alt={p.name} sizes="56px" />
+                <ProductImage src={productCover(p)} alt={p.name} sizes="56px" />
               </button>
               <button onClick={() => onEdit?.(p)} disabled={!onEdit} className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium">{p.name}</p>

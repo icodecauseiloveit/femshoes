@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { discountPercent, formatCOP } from "@/lib/format";
-import { colorSlug, defaultVariant, totalStock, variantCover, variantStock, type Product } from "@/lib/types";
+import { colorSlug, defaultVariant, productCover, totalStock, variantCover, variantStock, type Product } from "@/lib/types";
 import { ProductImage } from "./product-image";
 
 const MAX_SWATCHES = 5;
@@ -14,13 +14,15 @@ const MAX_SWATCHES = 5;
  */
 export function ProductCard({ product, priority, color }: { product: Product; priority?: boolean; color?: string }) {
   const [variantId, setVariantId] = useState(() => defaultVariant(product, color).id);
+  // Sin color elegido se ve la foto de portada; al tocar un color, la de ese color
+  const [picked, setPicked] = useState(Boolean(color));
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
   const multiColor = product.variants.length > 1;
 
   const off = discountPercent(product.price, product.compareAtPrice);
   const soldOut = totalStock(product) === 0;
-  const href = multiColor ? `/producto/${product.slug}?color=${colorSlug(variant.color)}` : `/producto/${product.slug}`;
-  const image = variantCover(product, variant);
+  const href = multiColor && picked ? `/producto/${product.slug}?color=${colorSlug(variant.color)}` : `/producto/${product.slug}`;
+  const image = picked ? variantCover(product, variant) : productCover(product);
   const extra = product.variants.length - MAX_SWATCHES;
 
   return (
@@ -29,7 +31,7 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
         <div className="relative">
           <ProductImage
             src={image}
-            alt={multiColor ? `${product.name} ${variant.color}` : product.name}
+            alt={multiColor && picked ? `${product.name} ${variant.color}` : product.name}
             priority={priority}
             sizes="(min-width: 1024px) 25vw, 50vw"
             className="transition duration-500 group-hover:opacity-90"
@@ -44,6 +46,7 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
             </span>
           ) : (
             multiColor &&
+            picked &&
             variantStock(variant) === 0 && (
               <span className="eyebrow absolute inset-x-0 bottom-0 bg-white/90 py-2 text-center text-[0.6rem]">
                 Agotado en {variant.color}
@@ -62,12 +65,15 @@ export function ProductCard({ product, priority, color }: { product: Product; pr
       {product.variants.length > 0 && (
         <div className="flex items-center gap-1 px-0.5 pt-1.5">
           {product.variants.slice(0, MAX_SWATCHES).map((v) => {
-            const active = v.id === variant.id;
+            const active = picked && v.id === variant.id;
             return multiColor ? (
               <button
                 key={v.id}
                 type="button"
-                onClick={() => setVariantId(v.id)}
+                onClick={() => {
+                  setVariantId(v.id);
+                  setPicked(true);
+                }}
                 aria-label={`Ver en ${v.color}`}
                 aria-pressed={active}
                 title={v.color}

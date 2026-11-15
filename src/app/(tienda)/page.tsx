@@ -6,7 +6,7 @@ import { ProductImage } from "@/components/product-image";
 import { getCategories, getProducts } from "@/lib/catalog";
 import { store } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
-import { defaultVariant, variantCover } from "@/lib/types";
+import { productCover } from "@/lib/types";
 
 export default async function HomePage() {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
@@ -17,7 +17,7 @@ export default async function HomePage() {
   const slides: HeroSlide[] = heroProducts.map((p) => ({
     slug: p.slug,
     name: p.name,
-    image: variantCover(p, defaultVariant(p)),
+    image: productCover(p),
   }));
 
   return (
@@ -63,7 +63,7 @@ export default async function HomePage() {
                 href={`/tienda?categoria=${c.slug}`}
                 className="group w-[40%] shrink-0 snap-start md:w-[19%]"
               >
-                <ProductImage src={sample?.images[0]} alt={c.label} sizes="40vw" className="transition group-hover:opacity-90" />
+                <ProductImage src={sample ? productCover(sample) : undefined} alt={c.label} sizes="40vw" className="transition group-hover:opacity-90" />
                 <p className="mt-2 font-display text-xl">{c.label}</p>
               </Link>
             );

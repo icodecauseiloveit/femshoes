@@ -25,6 +25,7 @@ export type ProductInput = {
   compareAtPrice: number | null; // precio antes del descuento
   variants: ProductVariant[];
   sharedImages: string[]; // fotos generales del modelo: se muestran con todos los colores
+  coverImage?: string | null; // foto de portada del modelo (catálogo, inicio), aparte de las de cada color
   featured: boolean;
   isNew: boolean;
   active: boolean;
@@ -58,6 +59,7 @@ export type ProductRow = {
   images: string[] | null;
   variants?: ProductVariant[] | null;
   shared_images?: string[] | null;
+  cover_image?: string | null;
   featured: boolean;
   is_new: boolean;
   active: boolean;
@@ -101,20 +103,21 @@ function cleanVariant(v: ProductVariant): ProductVariant {
 }
 
 /** Calcula los campos resumidos (colores, tallas sumadas y fotos) a partir de las variantes. */
-export function summarize(variants: ProductVariant[], sharedImages: string[] = []) {
+export function summarize(variants: ProductVariant[], sharedImages: string[] = [], coverImage?: string | null) {
   const totals = new Map<number, number>();
   for (const v of variants) for (const s of v.sizes) totals.set(s.size, (totals.get(s.size) ?? 0) + s.stock);
   return {
     colors: variants.map((v) => ({ name: v.color, hex: v.hex })),
     sizes: [...totals].map(([size, stock]) => ({ size, stock })).sort(bySize),
-    images: [...new Set([...variants.flatMap((v) => v.images), ...sharedImages])],
+    images: [...new Set([...(coverImage ? [coverImage] : []), ...variants.flatMap((v) => v.images), ...sharedImages])],
   };
 }
 
 export function withSummary(p: ProductInput & { id: string; code?: string }): Product {
   const variants = p.variants.map(cleanVariant);
   const sharedImages = (p.sharedImages ?? []).filter(Boolean);
-  return { ...p, variants, sharedImages, ...summarize(variants, sharedImages) };
+  const coverImage = p.coverImage || null;
+  return { ...p, variants, sharedImages, coverImage, ...summarize(variants, sharedImages, coverImage) };
 }
 
 export function fromRow(r: ProductRow): Product {
@@ -133,6 +136,7 @@ export function fromRow(r: ProductRow): Product {
     compareAtPrice: r.compare_at_price,
     variants,
     sharedImages: r.shared_images ?? [],
+    coverImage: r.cover_image ?? null,
     featured: r.featured,
     isNew: r.is_new,
     active: r.active,
@@ -143,7 +147,8 @@ export function fromRow(r: ProductRow): Product {
 export function toRow(p: ProductInput): Omit<ProductRow, "id" | "code"> {
   const variants = p.variants.map(cleanVariant);
   const sharedImages = (p.sharedImages ?? []).filter(Boolean);
-  const { colors, sizes, images } = summarize(variants, sharedImages);
+  const coverImage = p.coverImage || null;
+  const { colors, sizes, images } = summarize(variants, sharedImages, coverImage);
   return {
     slug: p.slug,
     name: p.name,
@@ -154,6 +159,7 @@ export function toRow(p: ProductInput): Omit<ProductRow, "id" | "code"> {
     compare_at_price: p.compareAtPrice,
     variants,
     shared_images: sharedImages,
+    cover_image: coverImage,
     // Columnas resumidas: se mantienen para búsquedas y compatibilidad
     colors,
     sizes,
@@ -224,4 +230,9 @@ export function variantGallery(p: Pick<Product, "sharedImages" | "images">, v: P
 /** Foto principal de un color: la portada del color o, si no tiene, la primera general. */
 export function variantCover(p: Pick<Product, "sharedImages" | "images">, v: ProductVariant | undefined) {
   return v?.images[0] ?? p.sharedImages[0] ?? p.images[0] ?? "";
+}
+
+/** Portada del modelo para el catálogo y el inicio: la foto de portada, o la del color principal. */
+export function productCover(p: Product) {
+  return p.coverImage || variantCover(p, defaultVariant(p));
 }

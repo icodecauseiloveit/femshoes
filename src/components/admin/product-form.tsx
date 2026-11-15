@@ -98,7 +98,7 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
     set("variants", list);
   }
 
-  /** Sube fotos a un color o, con target "shared", a las fotos generales del modelo. */
+  /** Sube fotos a un color; con target "shared", a las generales del modelo; con "cover", la portada. */
   async function upload(target: string, files: FileList | null) {
     if (!files?.length) return;
     const supabase = getSupabase();
@@ -110,9 +110,9 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
     setUploading(target);
     setError("");
     const urls: string[] = [];
-    const sub = target === "shared" ? "general" : slugify(variant?.color ?? "") || target;
+    const sub = target === "shared" ? "general" : target === "cover" ? "portada" : slugify(variant?.color ?? "") || target;
     const folder = `${form.slug || slugify(form.name) || "producto"}/${sub}`;
-    for (const file of Array.from(files)) {
+    for (const file of Array.from(files).slice(0, target === "cover" ? 1 : undefined)) {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${folder}/${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).upload(path, file, {
@@ -125,7 +125,9 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
       }
       urls.push(supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path).data.publicUrl);
     }
-    if (target === "shared") setForm((f) => ({ ...f, sharedImages: [...f.sharedImages, ...urls] }));
+    if (target === "cover") {
+      if (urls[0]) set("coverImage", urls[0]);
+    } else if (target === "shared") setForm((f) => ({ ...f, sharedImages: [...f.sharedImages, ...urls] }));
     else updateVariant(target, (v) => ({ images: [...v.images, ...urls] }));
     setUploading(null);
   }
@@ -255,6 +257,20 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
             <input type="number" inputMode="numeric" min={0} step={100} value={form.compareAtPrice ?? ""} onChange={(e) => set("compareAtPrice", e.target.value ? Number(e.target.value) : null)} className="field" />
           </Label>
         </div>
+      </Section>
+
+      <Section title="Foto de portada">
+        <p className="text-xs text-muted">
+          La que se ve en el catálogo, en el inicio y en las categorías. Es aparte de las fotos de cada color; si no subes una,
+          se usa la primera foto del primer color.
+        </p>
+        <CoverPhoto
+          src={form.coverImage ?? null}
+          fallback={form.variants[0]?.images[0] ?? form.sharedImages[0] ?? null}
+          uploading={uploading === "cover"}
+          onUpload={(files) => upload("cover", files)}
+          onRemove={() => set("coverImage", null)}
+        />
       </Section>
 
       <Section title="Colores, fotos y tallas">
@@ -549,6 +565,53 @@ function VariantEditor({ variant: v, index, total, others, uploading, locked, pr
 }
 
 /** Cuadrícula de fotos: ordenar, quitar, pasar a otro grupo y subir nuevas. */
+/** Una sola foto: la portada del modelo. */
+function CoverPhoto({
+  src,
+  fallback,
+  uploading,
+  onUpload,
+  onRemove,
+}: {
+  src: string | null;
+  fallback: string | null;
+  uploading: boolean;
+  onUpload: (files: FileList | null) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-4" data-testid="cover-photo">
+      <div className="w-32 shrink-0">
+        {src ? (
+          <ProductImage src={src} alt="Foto de portada" sizes="128px" />
+        ) : (
+          <div className="relative">
+            {fallback ? (
+              <ProductImage src={fallback} alt="" sizes="128px" className="opacity-40" />
+            ) : (
+              <div className="aspect-[4/5] bg-mist" />
+            )}
+            <span className="absolute inset-x-0 bottom-2 text-center text-[0.65rem] text-ink-soft">
+              {fallback ? "Usando la del 1.er color" : "Sin foto"}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="space-y-2 pt-1 text-sm">
+        <label className="btn inline-flex min-h-10 cursor-pointer border border-ink px-4">
+          {uploading ? "Subiendo…" : src ? "Cambiar portada" : "Subir portada"}
+          <input type="file" accept="image/*" hidden onChange={(e) => onUpload(e.target.files)} aria-label="Subir foto de portada" />
+        </label>
+        {src && (
+          <button type="button" onClick={onRemove} className="block text-xs text-sale underline underline-offset-4">
+            Quitar portada
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PhotoGrid({
   images,
   uploading,
