@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createStaff, listStaff, removeStaff, updateStaffRole } from "@/app/admin/actions";
-import { roleLabel, roles, type Role, type StaffMember } from "@/lib/roles";
+import { createStaff, listRoles, listStaff, removeStaff, updateStaffRole } from "@/app/admin/actions";
+import type { Role, RoleDef, StaffMember } from "@/lib/roles";
 import { getSupabase } from "@/lib/supabase";
 
 async function getToken() {
@@ -12,6 +12,8 @@ async function getToken() {
 
 export function StaffPanel({ myEmail }: { myEmail: string }) {
   const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [roles, setRoles] = useState<RoleDef[]>([]);
+  const roleLabel = (slug: string) => roles.find((r) => r.slug === slug)?.name ?? slug;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -19,11 +21,13 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await listStaff(await getToken());
-    if (res.ok) {
+    const token = await getToken();
+    const [res, rolesRes] = await Promise.all([listStaff(token), listRoles(token)]);
+    if (res.ok && rolesRes.ok) {
       setStaff(res.data);
+      setRoles(rolesRes.data);
       setError("");
-    } else setError(res.error);
+    } else setError(!res.ok ? res.error : !rolesRes.ok ? rolesRes.error : "");
     setLoading(false);
   }, []);
 
@@ -67,6 +71,7 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
 
       {showForm && (
         <NewStaffForm
+          roles={roles}
           onCancel={() => setShowForm(false)}
           onCreated={(email, role) => {
             setShowForm(false);
@@ -104,7 +109,7 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
                   className="border border-line-strong bg-white px-2 py-2 text-sm disabled:opacity-60"
                 >
                   {roles.map((r) => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
+                    <option key={r.slug} value={r.slug}>{r.name}</option>
                   ))}
                 </select>
                 {!isMe && (
@@ -120,26 +125,29 @@ export function StaffPanel({ myEmail }: { myEmail: string }) {
 
       <div className="text-xs leading-relaxed text-muted">
         {roles.map((r) => (
-          <p key={r.value}>
-            <strong className="font-medium text-ink-soft">{r.label}:</strong> {r.description}.
+          <p key={r.slug}>
+            <strong className="font-medium text-ink-soft">{r.name}:</strong> {r.description || "sin descripción"}
           </p>
         ))}
+        <p className="mt-2">Los roles y sus permisos se gestionan en la pestaña Roles.</p>
       </div>
     </div>
   );
 }
 
 function NewStaffForm({
+  roles,
   onCancel,
   onCreated,
 }: {
+  roles: RoleDef[];
   onCancel: () => void;
   onCreated: (email: string, role: Role) => void;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<Role>("admin");
+  const [role, setRole] = useState<Role>(() => roles.find((r) => !r.system)?.slug ?? roles[0]?.slug ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -183,12 +191,12 @@ function NewStaffForm({
         <div className="grid gap-2 sm:grid-cols-2">
           {roles.map((r) => (
             <label
-              key={r.value}
-              className={`flex cursor-pointer gap-3 border p-3 text-sm ${role === r.value ? "border-ink bg-white" : "border-line bg-white/60"}`}
+              key={r.slug}
+              className={`flex cursor-pointer gap-3 border p-3 text-sm ${role === r.slug ? "border-ink bg-white" : "border-line bg-white/60"}`}
             >
-              <input type="radio" name="role" value={r.value} checked={role === r.value} onChange={() => setRole(r.value)} className="mt-0.5 accent-ink" />
+              <input type="radio" name="role" value={r.slug} checked={role === r.slug} onChange={() => setRole(r.slug)} className="mt-0.5 accent-ink" />
               <span>
-                <span className="block font-medium">{r.label}</span>
+                <span className="block font-medium">{r.name}</span>
                 <span className="text-xs text-muted">{r.description}</span>
               </span>
             </label>

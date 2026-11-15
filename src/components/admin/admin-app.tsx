@@ -11,11 +11,15 @@ import { sampleProducts } from "@/lib/sample-products";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { fromRow, skuOf, totalStock, type Product, type ProductRow } from "@/lib/types";
 import { ProductImage } from "../product-image";
-import { isRole, permissions, roleLabel, type Role } from "@/lib/roles";
+import { can, type Access, type Permission } from "@/lib/roles";
+import { getMyAccess } from "@/app/admin/actions";
+import { RolesPanel } from "./roles-panel";
 import { CustomersPanel } from "./customers-panel";
 import { OrdersPanel } from "./orders-panel";
 import { ReceivablesPanel } from "./receivables-panel";
 import { ProductForm } from "./product-form";
+import { ProductHistory } from "./product-history";
+import { ReasonDialog } from "./reason-dialog";
 import { StaffPanel } from "./staff-panel";
 
 /** Lee el enlace de recuperación (/admin?reset=1#...) antes de que Supabase limpie la URL. */
@@ -236,7 +240,9 @@ function ResetPassword({ onDone }: { onDone: () => void }) {
 function Dashboard({ email }: { email: string }) {
   const supabase = getSupabase()!;
   const myEmail = email.toLowerCase();
-  const [role, setRole] = useState<Role | null | undefined>(undefined);
+  // Rol y permisos de quien entra: undefined = cargando, null = sin acceso
+  const [access, setAccess] = useState<Access | null | undefined>(undefined);
+  const [accessError, setAccessError] = useState("");
   const [tab, setTab] = useState<Tab | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const openCustomer = (id: string) => {
@@ -245,19 +251,27 @@ function Dashboard({ email }: { email: string }) {
   };
 
   useEffect(() => {
-    supabase
-      .from("admins")
-      .select("role")
-      .eq("email", myEmail)
-      .maybeSingle()
-      .then(({ data }) => setRole(data && isRole(data.role) ? data.role : null));
+    let alive = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const res = await getMyAccess(data.session?.access_token ?? "");
+      if (!alive) return;
+      if (res.ok) setAccess(res.data);
+      else {
+        setAccessError(res.error);
+        setAccess(null);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, [supabase, myEmail]);
 
   const header = (
     <div className="flex items-center justify-between text-xs text-muted">
       <span>
         {email}
-        {role && ` · ${roleLabel(role)}`}
+        {access && ` · ${access.roleName}`}
       </span>
       <button onClick={() => supabase.auth.signOut()} className="underline underline-offset-4">
         Cerrar sesión
@@ -265,21 +279,21 @@ function Dashboard({ email }: { email: string }) {
     </div>
   );
 
-  if (role === undefined) return <p className="py-20 text-center text-sm text-muted">Cargando…</p>;
+  if (access === undefined) return <p className="py-20 text-center text-sm text-muted">Cargando…</p>;
 
-  if (role === null) {
+  if (access === null) {
     return (
       <div className="space-y-5">
         {header}
         <p className="border border-sale/40 bg-sale/5 p-4 text-sm text-sale">
-          Tu cuenta no tiene acceso al panel. Pide a un superadmin que te agregue.
+          {accessError || "Tu cuenta no tiene acceso al panel. Pide a un superadmin que te agregue."}
         </p>
       </div>
     );
   }
 
-  const tabs = allTabs.filter((t) => permissions[t.perm](role));
-  const current = tabs.find((t) => t.id === tab) ?? tabs[0];
+  const tabs = allTabs.filter((t) => (t.perm === "superadmin" ? access.superadmin : t.perm.some((p) => can(access, p))));
+  const current = tabs.find((t) => t.id === tab) ?? tabs[0] as (typeof tabs)[number] | undefined;
 
   return (
     <div className="space-y-5">
@@ -293,34 +307,40 @@ function Dashboard({ email }: { email: string }) {
                 setTab(t.id);
                 if (t.id === "clientes") setCustomerId(null);
               }}
-              className={`eyebrow -mb-px shrink-0 border-b-2 px-3 py-3 text-[0.65rem] ${current.id === t.id ? "border-ink text-ink" : "border-transparent text-muted"}`}
+              className={`eyebrow -mb-px shrink-0 border-b-2 px-3 py-3 text-[0.65rem] ${current?.id === t.id ? "border-ink text-ink" : "border-transparent text-muted"}`}
             >
               {t.label}
             </button>
           ))}
         </div>
       )}
-      {current.id === "productos" && <ProductsPanel />}
-      {current.id === "categorias" && <CategoriesPanel />}
-      {current.id === "pedidos" && <OrdersPanel role={role} onOpenCustomer={permissions.customers(role) ? openCustomer : undefined} />}
-      {current.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} />}
-      {current.id === "cartera" && <ReceivablesPanel onOpenCustomer={openCustomer} />}
-      {current.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
+      {tabs.length === 0 && <p className="py-10 text-center text-sm text-muted">Tu rol todavía no tiene permisos. Pide a un superadmin que los asigne.</p>}
+      {current?.id === "productos" && <ProductsPanel access={access} />}
+      {current?.id === "categorias" && <CategoriesPanel />}
+      {current?.id === "pedidos" && <OrdersPanel canManage={can(access, "pedidos")} onOpenCustomer={can(access, "clientas") ? openCustomer : undefined} />}
+      {current?.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} />}
+      {current?.id === "cartera" && <ReceivablesPanel onOpenCustomer={openCustomer} />}
+      {current?.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
+      {current?.id === "roles" && <RolesPanel />}
     </div>
   );
 }
 
-type Tab = "productos" | "categorias" | "pedidos" | "clientes" | "cartera" | "usuarios";
-const allTabs: { id: Tab; label: string; perm: keyof typeof permissions }[] = [
-  { id: "productos", label: "Productos", perm: "products" },
-  { id: "categorias", label: "Categorías", perm: "products" },
-  { id: "pedidos", label: "Pedidos", perm: "orders" },
-  { id: "clientes", label: "Clientas", perm: "customers" },
-  { id: "cartera", label: "Cartera", perm: "customers" },
-  { id: "usuarios", label: "Usuarios", perm: "users" },
+type Tab = "productos" | "categorias" | "pedidos" | "clientes" | "cartera" | "usuarios" | "roles";
+const allTabs: { id: Tab; label: string; perm: Permission[] | "superadmin" }[] = [
+  { id: "productos", label: "Productos", perm: ["productos", "productos_publicar", "productos_eliminar"] },
+  { id: "categorias", label: "Categorías", perm: ["categorias"] },
+  { id: "pedidos", label: "Pedidos", perm: ["pedidos", "despachos"] },
+  { id: "clientes", label: "Clientas", perm: ["clientas"] },
+  { id: "cartera", label: "Cartera", perm: ["clientas"] },
+  { id: "usuarios", label: "Usuarios", perm: "superadmin" },
+  { id: "roles", label: "Roles", perm: "superadmin" },
 ];
 
-function ProductsPanel() {
+function ProductsPanel({ access }: { access: Access }) {
+  const canEdit = can(access, "productos");
+  const canPublish = can(access, "productos_publicar");
+  const canDelete = can(access, "productos_eliminar");
   const supabase = getSupabase()!;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -340,25 +360,34 @@ function ProductsPanel() {
     load();
   }, [load]);
 
-  async function toggleActive(p: Product) {
-    const { error } = await supabase.from("products").update({ active: !p.active }).eq("id", p.id);
-    if (error) return alertError(error.message);
+  // Ocultar, publicar y eliminar piden el motivo, que queda en el historial
+  const [dialog, setDialog] = useState<{ kind: "toggle" | "delete"; product: Product } | null>(null);
+  const [history, setHistory] = useState(false);
+
+  async function toggleActive(p: Product, reason: string) {
+    const { error } = await supabase.from("products").update({ active: !p.active, change_reason: reason }).eq("id", p.id);
+    if (error) return error.message;
+    setDialog(null);
     await refreshCatalog();
     load();
   }
 
-  async function remove(p: Product) {
-    if (!confirm(`¿Eliminar "${p.name}"? Esta acción no se puede deshacer.`)) return;
-    const { error } = await supabase.from("products").delete().eq("id", p.id);
-    if (error) return alertError(error.message);
+  async function remove(p: Product, reason: string) {
+    const { error } = await supabase.rpc("delete_product", { p_id: p.id, p_reason: reason });
+    if (error) return error.message;
+    setDialog(null);
     await refreshCatalog();
     load();
   }
+
+  if (history) return <ProductHistory onBack={() => setHistory(false)} />;
 
   if (editing) {
     return (
       <ProductForm
         product={editing === "new" ? null : editing}
+        canPublish={canPublish}
+        showHistory={access.superadmin}
         onClose={() => setEditing(null)}
         onSaved={() => {
           setEditing(null);
@@ -380,18 +409,37 @@ function ProductsPanel() {
       ) : (
         <ProductList
           products={products}
-          onEdit={setEditing}
-          onNew={() => setEditing("new")}
-          onToggle={toggleActive}
-          onDelete={remove}
+          onEdit={canEdit ? setEditing : undefined}
+          onNew={canEdit ? () => setEditing("new") : undefined}
+          onToggle={canPublish ? (product) => setDialog({ kind: "toggle", product }) : undefined}
+          onDelete={canDelete ? (product) => setDialog({ kind: "delete", product }) : undefined}
+          onHistory={access.superadmin ? () => setHistory(true) : undefined}
+        />
+      )}
+      {dialog && (
+        <ReasonDialog
+          title={
+            dialog.kind === "delete"
+              ? `Eliminar "${dialog.product.name}"`
+              : dialog.product.active
+                ? `Ocultar "${dialog.product.name}"`
+                : `Publicar "${dialog.product.name}"`
+          }
+          description={
+            dialog.kind === "delete"
+              ? "Esta acción no se puede deshacer. El producto queda guardado en el historial."
+              : dialog.product.active
+                ? "Dejará de verse en la tienda."
+                : "Volverá a verse en la tienda."
+          }
+          confirmLabel={dialog.kind === "delete" ? "Eliminar" : dialog.product.active ? "Ocultar" : "Publicar"}
+          danger={dialog.kind === "delete"}
+          onCancel={() => setDialog(null)}
+          onConfirm={(reason) => (dialog.kind === "delete" ? remove(dialog.product, reason) : toggleActive(dialog.product, reason))}
         />
       )}
     </div>
   );
-}
-
-function alertError(message: string) {
-  alert(`No se pudo completar la acción: ${message}`);
 }
 
 /* ---------------- Lista de productos ---------------- */
@@ -402,12 +450,14 @@ function ProductList({
   onNew,
   onToggle,
   onDelete,
+  onHistory,
 }: {
   products: Product[];
-  onEdit: (p: Product) => void;
-  onNew: () => void;
+  onEdit?: (p: Product) => void;
+  onNew?: () => void;
   onToggle?: (p: Product) => void;
   onDelete?: (p: Product) => void;
+  onHistory?: () => void;
 }) {
   const { categories } = useAdminCategories();
   const [q, setQ] = useState("");
@@ -424,7 +474,12 @@ function ProductList({
     <div>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-3xl">Productos <span className="text-lg text-muted">({products.length})</span></h1>
-        <button onClick={onNew} className="btn min-h-10 bg-ink px-4 text-white">+ Nuevo</button>
+        <div className="flex items-center gap-3">
+          {onHistory && (
+            <button onClick={onHistory} className="text-xs text-ink-soft underline underline-offset-4">Historial</button>
+          )}
+          {onNew && <button onClick={onNew} className="btn min-h-10 bg-ink px-4 text-white">+ Nuevo</button>}
+        </div>
       </div>
       <input placeholder="Buscar por nombre o código…" value={q} onChange={(e) => setQ(e.target.value)} className="field mt-4" />
       <ul className="mt-4 divide-y divide-line border-y border-line">
@@ -432,10 +487,10 @@ function ProductList({
           const stock = totalStock(p);
           return (
             <li key={p.id} className="flex items-center gap-3 py-3">
-              <button onClick={() => onEdit(p)} className="w-14 shrink-0">
+              <button onClick={() => onEdit?.(p)} disabled={!onEdit} className="w-14 shrink-0">
                 <ProductImage src={p.images[0]} alt={p.name} sizes="56px" />
               </button>
-              <button onClick={() => onEdit(p)} className="min-w-0 flex-1 text-left">
+              <button onClick={() => onEdit?.(p)} disabled={!onEdit} className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium">{p.name}</p>
                 {p.code && <p className="font-mono text-[0.7rem] tracking-wider text-ink-soft">{p.code}</p>}
                 <p className="text-xs text-muted">

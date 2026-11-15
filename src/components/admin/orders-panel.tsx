@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { listOrders, updateOrderStatus } from "@/app/admin/orders-actions";
 import { formatCOP } from "@/lib/format";
 import { orderCode, orderStatuses, statusLabel, type OrderStatus, type OrderView } from "@/lib/orders";
-import { permissions, type Role } from "@/lib/roles";
 import { getSupabase } from "@/lib/supabase";
 import { ProductImage } from "../product-image";
 import { OrderBilling, PaymentBadge } from "./order-billing";
@@ -22,8 +21,8 @@ const statusStyle: Record<OrderStatus, string> = {
   cancelado: "bg-sale/10 text-sale",
 };
 
-export function OrdersPanel({ role, onOpenCustomer }: { role: Role; onOpenCustomer?: (id: string) => void }) {
-  const canManage = permissions.manageOrders(role);
+/** canManage: permiso "pedidos" (todo). Sin él, vista de despacho (solo confirmados, sin precios). */
+export function OrdersPanel({ canManage, onOpenCustomer }: { canManage: boolean; onOpenCustomer?: (id: string) => void }) {
   const [filter, setFilter] = useState<OrderStatus>(canManage ? "pendiente" : "confirmado");
   const [orders, setOrders] = useState<OrderView[]>([]);
   const [loading, setLoading] = useState(true);

@@ -19,12 +19,17 @@ import {
   type ProductVariant,
 } from "@/lib/types";
 import { ProductImage } from "../product-image";
+import { ProductHistory } from "./product-history";
 
 type Props = {
   product: Product | null;
   demo?: boolean;
   onClose: () => void;
   onSaved: () => void;
+  /** Puede ocultar/publicar. Sin este permiso lo que crea queda oculto. */
+  canPublish?: boolean;
+  /** Ver el historial de cambios (solo superadmin). */
+  showHistory?: boolean;
 };
 
 // Cada color nuevo arranca con tallas 35 a 40 y 20 pares por talla (se pueden cambiar)
@@ -51,9 +56,9 @@ const blank: ProductInput = {
   active: true,
 };
 
-export function ProductForm({ product, demo, onClose, onSaved }: Props) {
+export function ProductForm({ product, demo, onClose, onSaved, canPublish = true, showHistory = true }: Props) {
   const [form, setForm] = useState<ProductInput>(() => {
-    if (!product) return blank;
+    if (!product) return { ...blank, active: canPublish };
     const { id: _id, colors: _c, sizes: _s, images: _i, ...rest } = product;
     const used: string[] = rest.variants.map((v) => v.code ?? "").filter(Boolean);
     const variants = rest.variants.map((v) => {
@@ -72,6 +77,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null); // id del color que está subiendo fotos
   const [error, setError] = useState("");
+  const [reason, setReason] = useState(""); // motivo del cambio: queda en el historial
 
   function set<K extends keyof ProductInput>(key: K, value: ProductInput[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -163,11 +169,12 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
     if (dupCode) return setError(`Hay dos colores con el código ${dupCode}. Cambia uno de ellos.`);
     const noSizes = variants.find((v) => v.sizes.length === 0);
     if (noSizes) return setError(`Agrega al menos una talla al color ${noSizes.color}.`);
+    if (product && !reason.trim()) return setError("Escribe el motivo de la modificación (queda en el historial).");
     if (demo) return setError("Modo de ejemplo: conecta Supabase para guardar cambios.");
 
     const supabase = getSupabase()!;
     setSaving(true);
-    const row = toRow(data);
+    const row = { ...toRow(data), change_reason: reason.trim() || "Creación del producto" };
     const { error } = product
       ? await supabase.from("products").update(row).eq("id", product.id)
       : await supabase.from("products").insert(row);
@@ -181,7 +188,7 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
   }
 
   return (
-    <form onSubmit={save} className="space-y-6 pb-28">
+    <form onSubmit={save} className="space-y-6 pb-44">
       <div className="flex items-center justify-between">
         <button type="button" onClick={onClose} className="text-sm text-ink-soft">← Volver</button>
         <h1 className="text-2xl">{product ? "Editar producto" : "Nuevo producto"}</h1>
@@ -297,13 +304,41 @@ export function ProductForm({ product, demo, onClose, onSaved }: Props) {
       </Section>
 
       <Section title="Visibilidad">
-        <Check label="Visible en la tienda" checked={form.active} onChange={(v) => set("active", v)} />
+        <Check
+          label="Visible en la tienda"
+          checked={form.active}
+          onChange={(v) => set("active", v)}
+          disabled={!canPublish}
+          hint={canPublish ? undefined : product ? "Tu rol no puede ocultar ni publicar productos." : "Quedará oculto hasta que alguien con permiso lo publique."}
+        />
         <Check label="Destacado en la página de inicio" checked={form.featured} onChange={(v) => set("featured", v)} />
         <Check label="Marcar como nuevo" checked={form.isNew} onChange={(v) => set("isNew", v)} />
       </Section>
 
+      {product && showHistory && (
+        <Section title="Historial de cambios">
+          <details>
+            <summary className="cursor-pointer text-sm underline underline-offset-4">Ver los cambios de este producto</summary>
+            <div className="mt-3">
+              <ProductHistory productId={product.id} title="" />
+            </div>
+          </details>
+        </Section>
+      )}
+
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-5xl">
+          <label className="mb-2 block">
+            <span className="sr-only">Motivo de la modificación</span>
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              maxLength={500}
+              placeholder={product ? "Motivo de la modificación (obligatorio)" : "Motivo (opcional), ej.: nuevo modelo de temporada"}
+              aria-label="Motivo de la modificación"
+              className="field py-2 text-sm"
+            />
+          </label>
           {error && <p className="mb-2 text-sm text-sale">{error}</p>}
           <button disabled={saving || Boolean(uploading)} className="btn w-full bg-ink text-white">
             {saving ? "Guardando…" : "Guardar producto"}
@@ -335,11 +370,26 @@ function Label({ text, hint, children }: { text: string; hint?: string; children
   );
 }
 
-function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+function Check({
+  label,
+  checked,
+  onChange,
+  disabled,
+  hint,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+  hint?: string;
+}) {
   return (
-    <label className="flex items-center gap-3 text-sm">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-5 accent-ink" />
-      {label}
+    <label className={`flex items-start gap-3 text-sm ${disabled ? "opacity-70" : ""}`}>
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="size-5 shrink-0 accent-ink" />
+      <span>
+        {label}
+        {hint && <span className="block text-xs text-muted">{hint}</span>}
+      </span>
     </label>
   );
 }

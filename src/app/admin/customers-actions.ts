@@ -13,7 +13,7 @@ import {
 } from "@/lib/customers";
 import { financeOf, paymentsByOrder, toPayment } from "@/lib/order-finance";
 import type { OrderItem, OrderStatus, OrderView } from "@/lib/orders";
-import { ActionError, requireRole, run, type Result } from "@/lib/staff-auth";
+import { ActionError, requireAccess, run, type Result } from "@/lib/staff-auth";
 import type { OrderRow } from "./orders-actions";
 
 type CustomerRow = {
@@ -71,12 +71,14 @@ function statsOf(orders: StatOrder[]): CustomerStats {
   };
 }
 
-const STAFF = ["superadmin", "admin"] as const;
+// Clientas y cartera: permiso "clientas". Cobros de un pedido: también quien gestiona pedidos.
+const CUSTOMERS = ["clientas"] as const;
+const BILLING = ["pedidos", "clientas"] as const;
 
 /** Todas las clientas con sus indicadores (compras, ticket, última compra, saldo). */
 export async function listCustomers(accessToken: string): Promise<Result<CustomerSummary[]>> {
   return run(async () => {
-    const { admin } = await requireRole(accessToken, [...STAFF]);
+    const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
     const [{ data: customers, error }, { data: orders, error: oErr }, { data: balances, error: bErr }] = await Promise.all([
       admin.from("customers").select("*").order("created_at", { ascending: false }).limit(5000),
       admin.from("orders").select("id, customer_id, status, created_at, total").not("customer_id", "is", null).limit(20000),
@@ -111,7 +113,7 @@ function top(items: OrderItem[], key: (i: OrderItem) => string, n = 4) {
 /** Ficha de una clienta: datos, indicadores, preferencias e historial de pedidos con pagos. */
 export async function getCustomer(accessToken: string, id: string): Promise<Result<CustomerDetail>> {
   return run(async () => {
-    const { admin } = await requireRole(accessToken, [...STAFF]);
+    const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
     const { data: c, error } = await admin.from("customers").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!c) throw new ActionError("La clienta no existe.");
@@ -166,7 +168,7 @@ const clip = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 
 export async function updateCustomer(accessToken: string, id: string, patch: CustomerPatch): Promise<Result<null>> {
   return run(async () => {
-    const { admin } = await requireRole(accessToken, [...STAFF]);
+    const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
     const row: Record<string, unknown> = {};
     if (patch.name !== undefined) {
       if (!clip(patch.name, 120)) throw new ActionError("Escribe el nombre de la clienta.");
@@ -206,7 +208,7 @@ export async function updateOrderCharges(
   input: { orderId: string; shippingCost: number; discount: number },
 ): Promise<Result<null>> {
   return run(async () => {
-    const { admin } = await requireRole(accessToken, [...STAFF]);
+    const { admin } = await requireAccess(accessToken, [...BILLING]);
     const shipping = Math.round(Number(input.shippingCost));
     const discount = Math.round(Number(input.discount));
     if (!(shipping >= 0) || !(discount >= 0) || shipping > 10_000_000 || discount > 100_000_000) {
@@ -227,7 +229,7 @@ export async function addPayment(
   input: { orderId: string; amount: number; paidAt: string; method: string; reference: string; notes?: string },
 ): Promise<Result<Payment>> {
   return run(async () => {
-    const { admin, myEmail } = await requireRole(accessToken, [...STAFF]);
+    const { admin, myEmail } = await requireAccess(accessToken, [...BILLING]);
     const amount = Math.round(Number(input.amount));
     if (!(amount > 0) || amount > 100_000_000) throw new ActionError("Escribe el valor del pago.");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(input.paidAt)) throw new ActionError("Elige la fecha del pago.");
@@ -255,7 +257,7 @@ export async function addPayment(
 
 export async function deletePayment(accessToken: string, paymentId: string): Promise<Result<null>> {
   return run(async () => {
-    const { admin } = await requireRole(accessToken, [...STAFF]);
+    const { admin } = await requireAccess(accessToken, [...BILLING]);
     const { error } = await admin.from("order_payments").delete().eq("id", paymentId);
     if (error) throw error;
     return null;
@@ -290,7 +292,7 @@ export type Receivables = {
 /** Pedidos confirmados o despachados con saldo pendiente, por antigüedad desde el despacho. */
 export async function getReceivables(accessToken: string): Promise<Result<Receivables>> {
   return run(async () => {
-    const { admin } = await requireRole(accessToken, [...STAFF]);
+    const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
     const { data, error } = await admin
       .from("orders")
       .select("*")

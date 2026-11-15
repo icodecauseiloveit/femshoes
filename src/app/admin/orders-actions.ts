@@ -10,7 +10,8 @@ import {
 } from "@/lib/orders";
 import type { Payment } from "@/lib/customers";
 import { financeOf, paymentsByOrder } from "@/lib/order-finance";
-import { ActionError, requireRole, run, type Result } from "@/lib/staff-auth";
+import { can } from "@/lib/roles";
+import { ActionError, requireAccess, run, type Result } from "@/lib/staff-auth";
 
 export type OrderRow = {
   id: string;
@@ -41,8 +42,8 @@ export type OrderRow = {
  */
 export async function listOrders(accessToken: string, status?: string): Promise<Result<OrderView[]>> {
   return run(async () => {
-    const { admin, role } = await requireRole(accessToken, ["superadmin", "admin", "distribuidor"]);
-    const full = role !== "distribuidor";
+    const { admin, access } = await requireAccess(accessToken, ["pedidos", "despachos"]);
+    const full = can(access, "pedidos");
     // El distribuidor solo ve pedidos por despachar (confirmados) o ya despachados
     const wanted: OrderStatus | undefined = full
       ? isOrderStatus(status) ? status : undefined
@@ -102,17 +103,18 @@ export async function updateOrderStatus(
   input: { id: string; status: string },
 ): Promise<Result> {
   return run(async () => {
-    const { admin, role } = await requireRole(accessToken, ["superadmin", "admin", "distribuidor"]);
+    const { admin, access, myEmail } = await requireAccess(accessToken, ["pedidos", "despachos"]);
     if (!isOrderStatus(input.status)) throw new ActionError("Estado no válido.");
 
-    if (role === "distribuidor") {
+    if (!can(access, "pedidos")) {
       const { data: current } = await admin.from("orders").select("status").eq("id", input.id).maybeSingle();
       if (current?.status !== "confirmado" || input.status !== "despachado") {
         throw new ActionError("Solo puedes marcar como despachados los pedidos confirmados.");
       }
     }
 
-    const { error } = await admin.rpc("set_order_status", { p_order_id: input.id, p_status: input.status });
+    // p_actor: queda en el historial de productos como quien movió el inventario
+    const { error } = await admin.rpc("set_order_status", { p_order_id: input.id, p_status: input.status, p_actor: myEmail });
     if (error) {
       if (/Stock insuficiente|ya no existe/i.test(error.message)) {
         throw new ActionError(`No se pudo confirmar. ${error.message}.`);
@@ -146,7 +148,7 @@ const startOfDay = (d: string) => new Date(`${d}T00:00:00-05:00`);
  */
 export async function getOrdersReport(accessToken: string, input: OrdersReportInput): Promise<Result<OrdersReport>> {
   return run(async () => {
-    const { admin, myEmail } = await requireRole(accessToken, ["superadmin", "admin"]);
+    const { admin, myEmail } = await requireAccess(accessToken, ["pedidos"]);
     const statuses = [...new Set((input.statuses ?? []).filter(isOrderStatus))];
     if (statuses.length === 0) throw new ActionError("Elige al menos un estado.");
     if (!DAY.test(input.from) || !DAY.test(input.to)) throw new ActionError("Elige las fechas del reporte.");
