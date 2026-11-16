@@ -10,7 +10,7 @@ export const documentTypes = [
 
 export const paymentMethods = ["Transferencia", "Nequi", "Daviplata", "Efectivo", "Tarjeta", "Otro"] as const;
 
-/** Etiquetas sugeridas para segmentar clientas (se pueden escribir otras). */
+/** Etiquetas sugeridas para segmentar clientes (se pueden escribir otras). */
 export const suggestedTags = ["VIP", "Mayorista", "Revendedora", "Frecuente"];
 
 export const INACTIVE_DAYS = 90;
@@ -32,7 +32,7 @@ export type Customer = {
   createdAt: string;
 };
 
-/** Indicadores comerciales de una clienta (pedidos cancelados no cuentan). */
+/** Indicadores comerciales de un cliente (pedidos cancelados no cuentan). */
 export type CustomerStats = {
   orders: number; // pedidos no cancelados
   purchases: number; // confirmados + despachados

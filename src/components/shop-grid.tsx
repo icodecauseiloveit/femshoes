@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { allSizes, categoryLabel, type Category } from "@/lib/config";
+import { audienceLabel, audiences, categoryLabel, isAudience, type Category } from "@/lib/config";
 import { colorSlug, type Product } from "@/lib/types";
 import { CloseIcon } from "./icons";
 import { ProductCard } from "./product-card";
@@ -28,6 +28,8 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
   const filter = params.get("filtro") ?? "";
   const size = Number(params.get("talla")) || 0;
   const color = params.get("color") ?? "";
+  const rawAudience = params.get("publico") ?? "";
+  const audience = isAudience(rawAudience) ? rawAudience : "";
   const sort = params.get("orden") ?? "destacados";
 
   function update(key: string, value: string) {
@@ -46,6 +48,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
 
   const list = useMemo(() => {
     let r = products.filter((p) => {
+      if (audience && !(p.audiences ?? []).includes(audience)) return false;
       if (category && p.category !== category) return false;
       if (filter === "nuevos" && !p.isNew) return false;
       if (filter === "ofertas" && !(p.compareAtPrice && p.compareAtPrice > p.price)) return false;
@@ -59,12 +62,25 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
     if (sort === "precio-desc") r = [...r].sort((a, b) => b.price - a.price);
     if (sort === "destacados") r = [...r].sort((a, b) => Number(b.featured) - Number(a.featured));
     return r;
-  }, [products, category, filter, size, color, sort]);
+  }, [products, audience, category, filter, size, color, sort]);
+
+  // Productos del público y la categoría elegidos: de ahí salen las tallas y colores a ofrecer
+  const scope = useMemo(
+    () => products.filter((p) => (!audience || (p.audiences ?? []).includes(audience)) && (!category || p.category === category)),
+    [products, audience, category],
+  );
+  // Tallas con existencias en ese grupo (de niños a hombre, según lo que haya)
+  const sizeOptions = useMemo(() => {
+    const set = new Set<number>();
+    for (const p of scope) for (const v of p.variants) for (const s of v.sizes) if (s.stock > 0) set.add(s.size);
+    if (size) set.add(size);
+    return [...set].sort((a, b) => a - b);
+  }, [scope, size]);
 
   // Colores disponibles en el catálogo (agrupados por nombre), los más comunes primero
   const colorOptions = useMemo(() => {
     const map = new Map<string, { slug: string; name: string; hex: string; count: number }>();
-    for (const p of products) {
+    for (const p of scope) {
       for (const v of p.variants) {
         const slug = colorSlug(v.color);
         if (!slug) continue;
@@ -74,16 +90,17 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       }
     }
     return [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "es"));
-  }, [products]);
+  }, [scope]);
   const colorName = colorOptions.find((c) => c.slug === color)?.name;
 
-  const title = category
+  const base = category
     ? categoryLabel(category, categories)
     : filter === "nuevos"
       ? "Novedades"
       : filter === "ofertas"
         ? "Ofertas"
-        : "Toda la colección";
+        : "";
+  const title = audience ? (base ? `${base} · ${audienceLabel(audience)}` : audienceLabel(audience)) : base || "Toda la colección";
   const activeCount = (size ? 1 : 0) + (color ? 1 : 0) + (sort !== "destacados" ? 1 : 0);
 
   return (
@@ -103,10 +120,24 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
         </p>
       </div>
 
-      {/* Chips de categoría (deslizables en móvil) */}
+      {/* Público y categorías (deslizables en móvil) */}
       <div className="sticky top-14 z-20 border-y border-line bg-white/95 backdrop-blur md:top-16">
+        <div className="no-scrollbar flex border-b border-line px-5" role="group" aria-label="Público" data-testid="publico">
+          {[{ value: "", label: "Todos" }, ...audiences].map((a) => (
+            <button
+              key={a.value || "todos"}
+              onClick={() => update("publico", a.value)}
+              aria-pressed={audience === a.value}
+              className={`eyebrow -mb-px shrink-0 border-b-2 px-3 py-3 text-[0.65rem] ${
+                audience === a.value ? "border-ink text-ink" : "border-transparent text-muted"
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 py-3">
-          <Chip active={!category && !filter} onClick={() => router.replace(pathname, { scroll: false })}>
+          <Chip active={!category && !filter} onClick={() => updateMany({ categoria: "", filtro: "" })}>
             Todo
           </Chip>
           {categories.map((c) => (
@@ -130,7 +161,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
       {list.length === 0 ? (
         <div className="px-5 py-20 text-center">
           <p className="font-display text-2xl">No encontramos productos</p>
-          <p className="mt-2 text-sm text-muted">Prueba con otra talla, color o categoría.</p>
+          <p className="mt-2 text-sm text-muted">Prueba con otro público, talla, color o categoría.</p>
           <button onClick={() => router.replace(pathname)} className="btn mt-6 border border-ink">
             Limpiar filtros
           </button>
@@ -155,9 +186,20 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
             </div>
             <div className="space-y-7 px-5 py-6">
               <div>
+                <p className="eyebrow mb-3">Para</p>
+                <div className="flex flex-wrap gap-2">
+                  {audiences.map((a) => (
+                    <Chip key={a.value} active={audience === a.value} onClick={() => update("publico", audience === a.value ? "" : a.value)}>
+                      {a.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+              <div>
                 <p className="eyebrow mb-3">Talla disponible</p>
+                {sizeOptions.length === 0 && <p className="text-sm text-muted">No hay tallas disponibles con estos filtros.</p>}
                 <div className="grid grid-cols-4 gap-2">
-                  {allSizes.map((s) => (
+                  {sizeOptions.map((s) => (
                     <button
                       key={s}
                       onClick={() => update("talla", size === s ? "" : String(s))}
@@ -208,7 +250,7 @@ export function ShopGrid({ products, categories }: { products: Product[]; catego
             </div>
             <div className="flex gap-3 border-t border-line px-5 pt-4">
               <button
-                onClick={() => updateMany({ talla: "", color: "", orden: "" })}
+                onClick={() => updateMany({ talla: "", color: "", orden: "", publico: "" })}
                 className="btn flex-1 border border-ink"
               >
                 Limpiar

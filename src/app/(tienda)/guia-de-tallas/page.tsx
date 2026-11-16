@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { measureTip, sizeGuide } from "@/lib/size-guide";
+import { measureTip, sizeGuide, usLegend } from "@/lib/size-guide";
 
 export const metadata: Metadata = { title: "Guía de tallas" };
 
@@ -34,7 +34,7 @@ export default function SizeGuidePage() {
         </table>
       </div>
       <p className="mt-4 text-xs text-muted">
-        Las medidas son aproximadas y pueden variar según la horma de cada modelo. Escríbenos por WhatsApp y te
+        {usLegend} Las medidas son aproximadas y pueden variar según la horma de cada modelo. Escríbenos por WhatsApp y te
         asesoramos.
       </p>
     </div>

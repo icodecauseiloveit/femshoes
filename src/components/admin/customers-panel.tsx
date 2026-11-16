@@ -28,12 +28,12 @@ const shortDate = (iso: string | null) =>
 const ago = (days: number | null) =>
   days === null ? "Sin compras" : days === 0 ? "Hoy" : days === 1 ? "Hace 1 día" : `Hace ${days} días`;
 
-type Segment = "todas" | "nuevas" | "recurrentes" | "inactivas" | "saldo" | "mercadeo";
+type Segment = "todos" | "nuevos" | "recurrentes" | "inactivos" | "saldo" | "mercadeo";
 const segments: { id: Segment; label: string; test: (c: CustomerSummary) => boolean }[] = [
-  { id: "todas", label: "Todas", test: () => true },
-  { id: "nuevas", label: "Nuevas", test: (c) => c.stats.firstOrderAt !== null && Date.now() - new Date(c.stats.firstOrderAt).getTime() <= 30 * 86_400_000 },
+  { id: "todos", label: "Todos", test: () => true },
+  { id: "nuevos", label: "Nuevos", test: (c) => c.stats.firstOrderAt !== null && Date.now() - new Date(c.stats.firstOrderAt).getTime() <= 30 * 86_400_000 },
   { id: "recurrentes", label: "Recurrentes", test: (c) => c.stats.purchases >= 2 },
-  { id: "inactivas", label: `Inactivas (+${INACTIVE_DAYS} días)`, test: (c) => (c.stats.daysSinceLast ?? 0) > INACTIVE_DAYS },
+  { id: "inactivos", label: `Inactivos (+${INACTIVE_DAYS} días)`, test: (c) => (c.stats.daysSinceLast ?? 0) > INACTIVE_DAYS },
   { id: "saldo", label: "Con saldo", test: (c) => c.stats.balance > 0 },
   { id: "mercadeo", label: "Aceptan novedades", test: (c) => Boolean(c.marketingConsentAt) },
 ];
@@ -53,7 +53,7 @@ export function CustomersPanel({
 }: {
   openId: string | null;
   onOpen: (id: string | null) => void;
-  /** Permiso "Eliminar clientas" (por defecto solo superadmin) */
+  /** Permiso "Eliminar clientes" (por defecto solo superadmin) */
   canDelete?: boolean;
 }) {
   const [deletedNotice, setDeletedNotice] = useState("");
@@ -61,7 +61,7 @@ export function CustomersPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
-  const [segment, setSegment] = useState<Segment>("todas");
+  const [segment, setSegment] = useState<Segment>("todos");
   const [tag, setTag] = useState("");
   const [sort, setSort] = useState<Sort>("reciente");
 
@@ -120,7 +120,7 @@ export function CustomersPanel({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-3xl">
-          Clientas <span className="text-lg text-muted">({list.length})</span>
+          Clientes <span className="text-lg text-muted">({list.length})</span>
         </h1>
         <button onClick={() => exportCsv(shown)} disabled={shown.length === 0} className="btn min-h-9 border border-ink px-3 text-[0.7rem]">
           Exportar Excel
@@ -145,22 +145,22 @@ export function CustomersPanel({
             {tags.map((t) => <option key={t}>{t}</option>)}
           </select>
         )}
-        <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar clientas" className="border border-line-strong bg-white px-2 py-1.5">
+        <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar clientes" className="border border-line-strong bg-white px-2 py-1.5">
           {sorts.map((s) => <option key={s.id} value={s.id}>Ordenar: {s.label}</option>)}
         </select>
       </div>
       {!loading && (
         <p className="text-xs text-muted">
-          {shown.length} {shown.length === 1 ? "clienta" : "clientas"} · Compras {formatCOP(totals.purchased)} · Saldo por cobrar{" "}
+          {shown.length} {shown.length === 1 ? "cliente" : "clientes"} · Compras {formatCOP(totals.purchased)} · Saldo por cobrar{" "}
           <span className={totals.balance > 0 ? "text-sale" : ""}>{formatCOP(totals.balance)}</span>
         </p>
       )}
       {deletedNotice && <p className="border border-gold/40 bg-mist p-3 text-sm">{deletedNotice}</p>}
       {error && <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">{error}</p>}
       {loading ? (
-        <p className="py-10 text-center text-sm text-muted">Cargando clientas…</p>
+        <p className="py-10 text-center text-sm text-muted">Cargando clientes…</p>
       ) : shown.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted">No hay clientas con estos filtros.</p>
+        <p className="py-10 text-center text-sm text-muted">No hay clientes con estos filtros.</p>
       ) : (
         <ul className="divide-y divide-line border-y border-line">
           {shown.map((c) => (
@@ -207,12 +207,12 @@ function exportCsv(rows: CustomerSummary[]) {
   const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `clientas-femshoes-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `clientes-chuzchuz-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
 
-/* ---------------- Ficha de la clienta ---------------- */
+/* ---------------- Ficha del cliente ---------------- */
 
 function CustomerView({
   id,
@@ -245,7 +245,7 @@ function CustomerView({
   if (!c) {
     return (
       <div className="space-y-4">
-        <button onClick={onBack} className="text-sm text-ink-soft">← Clientas</button>
+        <button onClick={onBack} className="text-sm text-ink-soft">← Clientes</button>
         {error ? <p className="text-sm text-sale">{error}</p> : <p className="py-10 text-center text-sm text-muted">Cargando ficha…</p>}
       </div>
     );
@@ -254,12 +254,12 @@ function CustomerView({
   const s = c.stats;
   return (
     <div className="space-y-5">
-      <button onClick={onBack} className="text-sm text-ink-soft">← Clientas</button>
+      <button onClick={onBack} className="text-sm text-ink-soft">← Clientes</button>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-3xl leading-tight">{c.name || "(Sin nombre)"}</h1>
           <p className="text-sm text-muted">
-            {formatPhone(c.phone)} · Clienta desde {shortDate(c.createdAt)}
+            {formatPhone(c.phone)} · Cliente desde {shortDate(c.createdAt)}
           </p>
           <p className="mt-1 text-xs text-muted">
             {c.marketingConsentAt ? `Acepta novedades por WhatsApp desde ${shortDate(c.marketingConsentAt)}` : "No ha autorizado mensajes de novedades"}
@@ -342,15 +342,15 @@ function CustomerView({
       {canDelete && (
         <div className="border-t border-line pt-4 text-right">
           <button onClick={() => setConfirmDelete(true)} className="text-xs text-sale underline underline-offset-4">
-            Eliminar clienta
+            Eliminar cliente
           </button>
         </div>
       )}
       {confirmDelete && (
         <ReasonDialog
-          title={`Eliminar a ${c.name || "esta clienta"}`}
+          title={`Eliminar a ${c.name || "este cliente"}`}
           description="Se borra su ficha: documento, correo, cumpleaños, etiquetas, notas y la autorización de mensajes. No se puede deshacer."
-          confirmLabel="Eliminar clienta"
+          confirmLabel="Eliminar cliente"
           danger
           onCancel={() => setConfirmDelete(false)}
           onConfirm={async (reason) => {
@@ -427,7 +427,7 @@ function CustomerForm({ c, onSaved }: { c: CustomerDetail; onSaved: () => void }
 
   return (
     <form onSubmit={save} className="space-y-3 border border-line bg-white p-3">
-      <p className="eyebrow text-[0.62rem]">Datos de la clienta</p>
+      <p className="eyebrow text-[0.62rem]">Datos del cliente</p>
       <L text="Nombre"><input required value={f.name} onChange={(e) => set("name", e.target.value)} className="field" /></L>
       <div className="grid grid-cols-[auto_1fr] gap-2">
         <L text="Documento">

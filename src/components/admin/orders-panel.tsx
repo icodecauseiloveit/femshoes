@@ -163,7 +163,7 @@ export function OrdersPanel({
                   {o.customer.notes && <p>Notas: {o.customer.notes}</p>}
                   {o.finance?.customerId && onOpenCustomer && (
                     <button onClick={() => onOpenCustomer(o.finance!.customerId!)} className="mt-1 text-xs text-ink underline underline-offset-4">
-                      Ver ficha de la clienta
+                      Ver ficha del cliente
                     </button>
                   )}
                 </div>
@@ -236,7 +236,7 @@ export function OrdersPanel({
       {deleting && (
         <ReasonDialog
           title={`Eliminar el pedido ${orderCode(deleting.number)}`}
-          description="Se borra de pedidos, de la cartera y de la ficha de la clienta. No se puede deshacer, pero queda una copia con el motivo."
+          description="Se borra de pedidos, de la cartera y de la ficha del cliente. No se puede deshacer, pero queda una copia con el motivo."
           confirmLabel="Eliminar pedido"
           danger
           onCancel={() => setDeleting(null)}

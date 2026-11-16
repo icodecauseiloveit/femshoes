@@ -199,5 +199,5 @@ export const sampleProducts: Product[] = samples.map(({ colors, sizes, images, .
       ],
     });
   }
-  return withSummary({ ...rest, variants, sharedImages: [] });
+  return withSummary({ ...rest, variants, sharedImages: [], audiences: ["mujeres"] });
 });

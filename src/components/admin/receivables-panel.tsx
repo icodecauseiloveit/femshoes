@@ -47,7 +47,7 @@ export function ReceivablesPanel({ onOpenCustomer }: { onOpenCustomer: (id: stri
         <button onClick={load} className="text-xs text-ink-soft underline underline-offset-4">Actualizar</button>
       </div>
       <p className="text-xs leading-relaxed text-muted">
-        Saldos de pedidos confirmados y despachados. La antigüedad se cuenta desde el despacho, porque la clienta paga al
+        Saldos de pedidos confirmados y despachados. La antigüedad se cuenta desde el despacho, porque el cliente paga al
         recibir el producto a conformidad.
       </p>
       {error && <p className="border border-sale/40 bg-sale/5 p-3 text-sm text-sale">{error}</p>}

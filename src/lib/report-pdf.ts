@@ -1,6 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable, { type RowInput } from "jspdf-autotable";
 import type { OrdersReport } from "@/app/admin/orders-actions";
+import { store } from "./config";
 import { formatCOP } from "./format";
 import { orderCode, statusLabel } from "./orders";
 
@@ -53,7 +54,7 @@ export function buildOrdersReportPdf(report: OrdersReport) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(15);
     doc.setTextColor(...INK);
-    doc.text("FEMSHOES", M, 14);
+    doc.text(store.name.toUpperCase(), M, 14);
     doc.setFontSize(8);
     doc.setTextColor(...MUTED);
     doc.text("Reporte de pedidos", M, 18.5);

@@ -31,7 +31,7 @@ export default async function HomePage() {
               Pasos que <em className="italic">dejan huella</em>
             </h1>
             <p className="mt-4 max-w-sm text-[0.95rem] leading-relaxed text-ink-soft">
-              Calzado femenino premium, diseñado para acompañarte con elegancia en cada momento.
+              Calzado para mujeres, hombres, niñas y niños, pensado para acompañar cada paso de la familia.
             </p>
             <div className="mt-7 flex gap-3">
               <Link href="/tienda" className="btn flex-1 bg-ink text-white md:flex-none">
@@ -63,7 +63,7 @@ export default async function HomePage() {
       </section>
 
       {featured.length > 0 && (
-        <ProductRail title="Los favoritos" eyebrow="Selección FemShoes" products={featured} href="/tienda" />
+        <ProductRail title="Los favoritos" eyebrow="Selección ChuzChuz" products={featured} href="/tienda" />
       )}
 
       {/* Banner editorial */}

@@ -71,11 +71,11 @@ function statsOf(orders: StatOrder[]): CustomerStats {
   };
 }
 
-// Clientas y cartera: permiso "clientas". Cobros de un pedido: también quien gestiona pedidos.
-const CUSTOMERS = ["clientas"] as const;
-const BILLING = ["pedidos", "clientas"] as const;
+// Clientes y cartera: permiso "clientes". Cobros de un pedido: también quien gestiona pedidos.
+const CUSTOMERS = ["clientes"] as const;
+const BILLING = ["pedidos", "clientes"] as const;
 
-/** Todas las clientas con sus indicadores (compras, ticket, última compra, saldo). */
+/** Todas los clientes con sus indicadores (compras, ticket, última compra, saldo). */
 export async function listCustomers(accessToken: string): Promise<Result<CustomerSummary[]>> {
   return run(async () => {
     const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
@@ -110,13 +110,13 @@ function top(items: OrderItem[], key: (i: OrderItem) => string, n = 4) {
   return [...map].map(([label, qty]) => ({ label, qty })).sort((a, b) => b.qty - a.qty).slice(0, n);
 }
 
-/** Ficha de una clienta: datos, indicadores, preferencias e historial de pedidos con pagos. */
+/** Ficha de un cliente: datos, indicadores, preferencias e historial de pedidos con pagos. */
 export async function getCustomer(accessToken: string, id: string): Promise<Result<CustomerDetail>> {
   return run(async () => {
     const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
     const { data: c, error } = await admin.from("customers").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
-    if (!c) throw new ActionError("La clienta no existe.");
+    if (!c) throw new ActionError("El cliente no existe.");
     const { data: rows, error: oErr } = await admin
       .from("orders")
       .select("*")
@@ -171,7 +171,7 @@ export async function updateCustomer(accessToken: string, id: string, patch: Cus
     const { admin } = await requireAccess(accessToken, [...CUSTOMERS]);
     const row: Record<string, unknown> = {};
     if (patch.name !== undefined) {
-      if (!clip(patch.name, 120)) throw new ActionError("Escribe el nombre de la clienta.");
+      if (!clip(patch.name, 120)) throw new ActionError("Escribe el nombre del cliente.");
       row.name = clip(patch.name, 120);
     }
     if (patch.documentType !== undefined) {
@@ -344,17 +344,17 @@ export async function getReceivables(accessToken: string): Promise<Result<Receiv
 }
 
 /**
- * Elimina la ficha de una clienta (permiso "Eliminar clientas"; por defecto solo el superadmin). Sus pedidos se conservan sin vincular
+ * Elimina la ficha de un cliente (permiso "Eliminar clientes"; por defecto solo el superadmin). Sus pedidos se conservan sin vincular
  * y siguen en la cartera; queda una constancia sin datos personales.
  */
 export async function deleteCustomer(accessToken: string, input: { id: string; reason: string }): Promise<Result<null>> {
   return run(async () => {
-    const { admin, myEmail } = await requireAccess(accessToken, ["clientas_eliminar"]);
+    const { admin, myEmail } = await requireAccess(accessToken, ["clientes_eliminar"]);
     const reason = input.reason?.trim() ?? "";
     if (!reason) throw new ActionError("Escribe el motivo de la eliminación.");
     const { error } = await admin.rpc("delete_customer", { p_customer_id: input.id, p_reason: reason, p_actor: myEmail });
     if (error) {
-      if (/no encontrada/i.test(error.message)) throw new ActionError("Esa clienta ya no existe.");
+      if (/no encontrada/i.test(error.message)) throw new ActionError("Ese cliente ya no existe.");
       throw error;
     }
     return null;

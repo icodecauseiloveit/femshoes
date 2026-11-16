@@ -1,5 +1,5 @@
 -- ============================================================
--- FemShoes · Esquema de base de datos para Supabase
+-- ChuzChuz · Esquema de base de datos para Supabase
 -- Ejecuta este archivo completo en: Supabase > SQL Editor > New query
 -- ============================================================
 

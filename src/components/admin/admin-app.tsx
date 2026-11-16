@@ -3,7 +3,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { useCallback, useEffect, useState } from "react";
 import { refreshCatalog } from "@/app/actions";
-import { categoryLabel } from "@/lib/config";
+import { audienceLabel, categoryLabel } from "@/lib/config";
 import { useAdminCategories } from "./use-categories";
 import { CategoriesPanel } from "./categories-panel";
 import { formatCOP } from "@/lib/format";
@@ -317,8 +317,8 @@ function Dashboard({ email }: { email: string }) {
       {tabs.length === 0 && <p className="py-10 text-center text-sm text-muted">Tu rol todavía no tiene permisos. Pide a un superadmin que los asigne.</p>}
       {current?.id === "productos" && <ProductsPanel access={access} />}
       {current?.id === "categorias" && <CategoriesPanel />}
-      {current?.id === "pedidos" && <OrdersPanel canManage={can(access, "pedidos")} canDelete={access.superadmin} onOpenCustomer={can(access, "clientas") ? openCustomer : undefined} />}
-      {current?.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} canDelete={can(access, "clientas_eliminar")} />}
+      {current?.id === "pedidos" && <OrdersPanel canManage={can(access, "pedidos")} canDelete={access.superadmin} onOpenCustomer={can(access, "clientes") ? openCustomer : undefined} />}
+      {current?.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} canDelete={can(access, "clientes_eliminar")} />}
       {current?.id === "cartera" && <ReceivablesPanel onOpenCustomer={openCustomer} />}
       {current?.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
       {current?.id === "roles" && <RolesPanel />}
@@ -331,8 +331,8 @@ const allTabs: { id: Tab; label: string; perm: Permission[] | "superadmin" }[] =
   { id: "productos", label: "Productos", perm: ["productos", "productos_publicar", "productos_eliminar"] },
   { id: "categorias", label: "Categorías", perm: ["categorias"] },
   { id: "pedidos", label: "Pedidos", perm: ["pedidos", "despachos"] },
-  { id: "clientes", label: "Clientas", perm: ["clientas"] },
-  { id: "cartera", label: "Cartera", perm: ["clientas"] },
+  { id: "clientes", label: "Clientes", perm: ["clientes"] },
+  { id: "cartera", label: "Cartera", perm: ["clientes"] },
   { id: "usuarios", label: "Usuarios", perm: "superadmin" },
   { id: "roles", label: "Roles", perm: "superadmin" },
 ];
@@ -495,6 +495,7 @@ function ProductList({
                 {p.code && <p className="font-mono text-[0.7rem] tracking-wider text-ink-soft">{p.code}</p>}
                 <p className="text-xs text-muted">
                   {categoryLabel(p.category, categories)} · {formatCOP(p.price)}
+                  {(p.audiences ?? []).length > 0 && ` · ${(p.audiences ?? []).map(audienceLabel).join(", ")}`}
                 </p>
                 <p className={`text-xs ${stock === 0 ? "text-sale" : "text-muted"}`}>
                   {stock === 0 ? "Sin stock" : `${stock} pares`}

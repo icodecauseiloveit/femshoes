@@ -5,7 +5,7 @@ import { getCategories, getProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Tienda",
-  description: "Tacones, sandalias, botas, planos y tenis premium para mujer.",
+  description: "Calzado para mujeres, hombres, niñas y niños: filtra por público, talla y color.",
 };
 
 export default async function ShopPage() {

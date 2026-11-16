@@ -37,7 +37,7 @@ export type OrderRow = {
 
 /**
  * Lista de pedidos según el rol:
- * - superadmin/admin: todos los estados, con precios y datos de la clienta.
+ * - superadmin/admin: todos los estados, con precios y datos del cliente.
  * - distribuidor: solo confirmados, sin precios ni datos personales.
  */
 export async function listOrders(accessToken: string, status?: string): Promise<Result<OrderView[]>> {

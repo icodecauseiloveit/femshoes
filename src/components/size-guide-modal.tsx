@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { measureTip, sizeGuide } from "@/lib/size-guide";
+import { measureTip, sizeGuide, usLegend } from "@/lib/size-guide";
 import { CloseIcon } from "./icons";
 
 type Props = {
@@ -77,7 +77,7 @@ export function SizeGuideModal({ open, onClose, color, sizes, stockOf, selected,
                   >
                     <td className="py-3 font-medium">{r.co}</td>
                     <td>{r.cm} cm</td>
-                    <td>{r.us}</td>
+                    <td className="text-xs">{r.us}</td>
                     <td>{r.eu}</td>
                     <td className="pr-2 text-right">
                       {out ? (
@@ -102,7 +102,7 @@ export function SizeGuideModal({ open, onClose, color, sizes, stockOf, selected,
               })}
             </tbody>
           </table>
-          <p className="text-xs text-muted">Medidas aproximadas; pueden variar según la horma de cada modelo.</p>
+          <p className="text-xs text-muted">{usLegend} Medidas aproximadas; pueden variar según la horma de cada modelo.</p>
           <button onClick={onClose} className="btn w-full bg-ink text-white">
             {selected ? `Listo · talla ${selected}` : "Cerrar"}
           </button>

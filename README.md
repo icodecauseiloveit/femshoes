@@ -1,4 +1,4 @@
-# FemShoes · Tienda online de calzado femenino premium
+# ChuzChuz · Tienda online de calzado para toda la familia (antes FemShoes)
 
 Tienda online pensada primero para el celular, construida con **Next.js 16** y **Tailwind CSS 4**. Los pedidos se envían por **WhatsApp** y los productos se administran desde un panel privado (`/admin`) conectado a **Supabase**.
 
@@ -88,7 +88,7 @@ Al conectar Supabase, la tienda deja de mostrar los productos de ejemplo y muest
 
 ## Despliegue actual (Dokploy)
 
-- **Tienda:** https://femshoes.miguiafinanciero.com — servicio `tienda` en el proyecto `femshoes` de Dokploy. Usa el `Dockerfile` y se vuelve a desplegar sola con cada push a `main`.
+- **Tienda:** https://femshoes.miguiafinanciero.com (dominio y proyecto `femshoes` de Dokploy conservan el nombre anterior) — servicio `tienda`. Usa el `Dockerfile` y se vuelve a desplegar sola con cada push a `main`.
 - **Supabase (autoalojado):** https://supabase.miguiafinanciero.com — servicio `pre0.22.5-supabase` (plantilla de Dokploy). El usuario y la contraseña de Studio están en sus variables de entorno (`DASHBOARD_USERNAME` y `DASHBOARD_PASSWORD`).
 - En Dokploy, `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` se configuran como **Build-time Arguments**, porque quedan fijadas al compilar.
 - Postgres no se publica en el servidor: el puerto 5432 del pooler está cerrado. Para ejecutar SQL usa el editor de Studio.

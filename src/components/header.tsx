@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { store, type Category } from "@/lib/config";
+import { audiences, store, type Category } from "@/lib/config";
 import { formatCOP } from "@/lib/format";
 import { useCart } from "./cart-provider";
 import { BagIcon, ChevronIcon, CloseIcon, MenuIcon } from "./icons";
@@ -39,9 +39,9 @@ export function Header({ categories }: { categories: Category[] }) {
             </button>
             <nav className="hidden gap-6 lg:flex">
               <Link href="/tienda" className="eyebrow hover:text-gold">Tienda</Link>
-              {categories.slice(0, 3).map((c) => (
-                <Link key={c.slug} href={`/tienda?categoria=${c.slug}`} className="eyebrow hover:text-gold">
-                  {c.label}
+              {audiences.map((a) => (
+                <Link key={a.value} href={`/tienda?publico=${a.value}`} className="eyebrow hover:text-gold">
+                  {a.label}
                 </Link>
               ))}
             </nav>
@@ -80,6 +80,10 @@ export function Header({ categories }: { categories: Category[] }) {
             </div>
             <nav className="flex-1 overflow-y-auto px-4 py-2">
               <MenuLink href="/tienda" label="Ver todo" />
+              {audiences.map((a) => (
+                <MenuLink key={a.value} href={`/tienda?publico=${a.value}`} label={a.label} />
+              ))}
+              <p className="eyebrow pb-1 pt-5 text-[0.6rem] text-muted">Categorías</p>
               {categories.map((c) => (
                 <MenuLink key={c.slug} href={`/tienda?categoria=${c.slug}`} label={c.label} />
               ))}

@@ -177,7 +177,7 @@ function RoleEditor({
       <div className="space-y-4">
         <label className="block">
           <span className="mb-1 block text-xs text-ink-soft">Nombre del rol</span>
-          <input required minLength={2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} className="field" placeholder="Ej.: Atención a clientas" />
+          <input required minLength={2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} className="field" placeholder="Ej.: Atención al cliente" />
         </label>
         <label className="block">
           <span className="mb-1 block text-xs text-ink-soft">Descripción (opcional)</span>

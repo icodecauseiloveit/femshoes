@@ -11,7 +11,8 @@ import { CartLine } from "./cart-drawer";
 import { lineKey, useCart } from "./cart-provider";
 import { WhatsAppIcon } from "./icons";
 
-const CUSTOMER_KEY = "femshoes-customer-v1";
+const CUSTOMER_KEY = "chuzchuz-customer-v1";
+const OLD_CUSTOMER_KEY = "femshoes-customer-v1"; // clave anterior (FemShoes)
 
 const empty: CustomerData = {
   name: "",
@@ -32,10 +33,12 @@ export function Checkout() {
   const [issues, setIssues] = useState<string[]>([]);
   const [marketing, setMarketing] = useState(false);
 
-  // Recordar los datos de la clienta en este teléfono
+  // Recordar los datos del cliente en este teléfono
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(CUSTOMER_KEY);
+      const saved = localStorage.getItem(CUSTOMER_KEY) ?? localStorage.getItem(OLD_CUSTOMER_KEY);
+      if (saved && !localStorage.getItem(CUSTOMER_KEY)) localStorage.setItem(CUSTOMER_KEY, saved);
+      localStorage.removeItem(OLD_CUSTOMER_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setCustomer({ ...empty, ...JSON.parse(saved), notes: "" });
     } catch {}

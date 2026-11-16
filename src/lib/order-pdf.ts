@@ -31,7 +31,7 @@ function loadImage(src: string): Promise<string | null> {
   });
 }
 
-/** Genera y descarga el PDF de un pedido. Muestra precios y datos de la clienta solo si vienen en el pedido. */
+/** Genera y descarga el PDF de un pedido. Muestra precios y datos del cliente solo si vienen en el pedido. */
 export async function downloadOrderPdf(order: OrderView) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });

@@ -38,7 +38,7 @@ export type OrderCustomer = {
   notes: string;
 };
 
-/** Pedido tal como lo ve cada rol: precios y datos de la clienta solo para superadmin/admin */
+/** Pedido tal como lo ve cada rol: precios y datos del cliente solo para superadmin/admin */
 export type OrderView = {
   id: string;
   number: number;
@@ -64,5 +64,5 @@ export type OrderFinance = {
 };
 
 export function orderCode(n: number) {
-  return `FS-${String(n).padStart(4, "0")}`;
+  return `CH-${String(n).padStart(4, "0")}`;
 }

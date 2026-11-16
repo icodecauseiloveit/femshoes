@@ -1,5 +1,5 @@
 # ============================================================
-# FemShoes · Imagen de producción (Dokploy / Docker)
+# ChuzChuz · Imagen de producción (Dokploy / Docker)
 # ============================================================
 
 # ---- 1. Dependencias ----

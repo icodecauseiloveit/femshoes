@@ -16,24 +16,24 @@ export const permissionGroups = [
   {
     label: "Pedidos",
     items: [
-      { key: "pedidos", label: "Gestionar pedidos", hint: "Ve precios y datos de la clienta, confirma, cancela, cobros y reporte PDF" },
+      { key: "pedidos", label: "Gestionar pedidos", hint: "Ve precios y datos del cliente, confirma, cancela, cobros y reporte PDF" },
       { key: "despachos", label: "Despachar pedidos", hint: "Solo pedidos confirmados, sin precios ni datos personales" },
     ],
   },
   {
-    label: "Clientas",
+    label: "Clientes",
     items: [
-      { key: "clientas", label: "Clientas y cartera", hint: "Ficha de clientas, pagos y cuentas por cobrar" },
-      { key: "clientas_eliminar", label: "Eliminar clientas", hint: "Borra la ficha; sus pedidos se conservan. Requiere Clientas y cartera" },
+      { key: "clientes", label: "Clientes y cartera", hint: "Ficha de clientes, pagos y cuentas por cobrar" },
+      { key: "clientes_eliminar", label: "Eliminar clientes", hint: "Borra la ficha; sus pedidos se conservan. Requiere Clientes y cartera" },
     ],
   },
 ] as const;
 
 export type Permission = (typeof permissionGroups)[number]["items"][number]["key"];
 
-/** Permisos que necesitan otro para tener sentido (p. ej. eliminar clientas exige ver clientas). */
+/** Permisos que necesitan otro para tener sentido (p. ej. eliminar clientes exige ver clientes). */
 export const permissionRequires: Partial<Record<Permission, Permission>> = {
-  clientas_eliminar: "clientas",
+  clientes_eliminar: "clientes",
 };
 
 export const allPermissions: Permission[] = permissionGroups.flatMap((g) => g.items.map((i) => i.key));

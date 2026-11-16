@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { refreshCatalog } from "@/app/actions";
-import { allSizes, defaultSizes, defaultStock } from "@/lib/config";
+import { allSizes, audiences, defaultSizesFor, defaultStock, type Audience } from "@/lib/config";
 import { useAdminCategories } from "./use-categories";
 import { slugify } from "@/lib/format";
 import { getSupabase, PRODUCT_IMAGES_BUCKET } from "@/lib/supabase";
@@ -32,14 +32,21 @@ type Props = {
   showHistory?: boolean;
 };
 
-// Cada color nuevo arranca con tallas 35 a 40 y 20 pares por talla (se pueden cambiar)
-const blankVariant = (hex = "#141210"): ProductVariant => ({
+// Cada color nuevo arranca con las tallas del público marcado (mujeres 35–40, hombres 38–44,
+// niñas y niños 24–34) y 20 pares por talla; todo se puede cambiar
+const blankVariant = (hex = "#141210", aud: readonly string[] = []): ProductVariant => ({
   id: newVariantId(),
   color: "",
   hex,
   images: [],
-  sizes: defaultSizes.map((size) => ({ size, stock: defaultStock })),
+  sizes: defaultSizesFor(aud).map((size) => ({ size, stock: defaultStock })),
 });
+
+/** ¿El color sigue con las tallas iniciales sin tocar? (para ajustarlas al cambiar el público) */
+const untouchedSizes = (v: ProductVariant, aud: readonly string[]) => {
+  const want = defaultSizesFor(aud);
+  return v.sizes.length === want.length && v.sizes.every((s, i) => s.size === want[i] && s.stock === defaultStock);
+};
 
 const blank: ProductInput = {
   slug: "",
@@ -51,6 +58,7 @@ const blank: ProductInput = {
   compareAtPrice: null,
   variants: [blankVariant()],
   sharedImages: [],
+  audiences: [],
   featured: false,
   isNew: true,
   active: true,
@@ -78,6 +86,22 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
   const [uploading, setUploading] = useState<string | null>(null); // id del color que está subiendo fotos
   const [error, setError] = useState("");
   const [reason, setReason] = useState(""); // motivo del cambio: queda en el historial
+
+  /** Marca o desmarca un público; en un producto nuevo, los colores sin tocar toman las tallas del nuevo público. */
+  function toggleAudience(a: Audience, on: boolean) {
+    setError("");
+    setForm((f) => {
+      const before = f.audiences ?? [];
+      const after = on ? [...new Set([...before, a])] : before.filter((x) => x !== a);
+      const order = audiences.map((x) => x.value).filter((x) => after.includes(x));
+      const variants = product
+        ? f.variants
+        : f.variants.map((v) =>
+            untouchedSizes(v, before) ? { ...v, sizes: defaultSizesFor(order).map((size) => ({ size, stock: defaultStock })) } : v,
+          );
+      return { ...f, audiences: order, variants };
+    });
+  }
 
   function set<K extends keyof ProductInput>(key: K, value: ProductInput[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -158,6 +182,7 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
       variants,
       compareAtPrice: form.compareAtPrice && form.compareAtPrice > form.price ? form.compareAtPrice : null,
     };
+    if (!(data.audiences ?? []).length) return setError("Marca para qué público es: mujeres, hombres, niñas o niños.");
     if (variants.length === 0) return setError("Agrega al menos un color.");
     const unnamed = variants.findIndex((v) => !v.color);
     if (unnamed >= 0) return setError(`Escribe el nombre del color ${unnamed + 1}.`);
@@ -240,6 +265,24 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
             ))}
           </select>
         </Label>
+        <fieldset>
+          <legend className="mb-1.5 text-xs text-ink-soft">Público (uno o varios)</legend>
+          <div className="flex flex-wrap gap-2" data-testid="audiences">
+            {audiences.map((a) => {
+              const on = (form.audiences ?? []).includes(a.value);
+              return (
+                <label
+                  key={a.value}
+                  className={`flex cursor-pointer items-center gap-2 border px-3 py-2 text-sm ${on ? "border-ink bg-ink text-white" : "border-line-strong bg-white"}`}
+                >
+                  <input type="checkbox" checked={on} onChange={(e) => toggleAudience(a.value, e.target.checked)} className="sr-only" />
+                  {a.label}
+                </label>
+              );
+            })}
+          </div>
+          {!product && <p className="mt-1.5 text-xs text-muted">Las tallas iniciales de los colores se ajustan al público que marques.</p>}
+        </fieldset>
         <Label text="Descripción">
           <textarea rows={4} value={form.description} onChange={(e) => set("description", e.target.value)} className="field" />
         </Label>
@@ -296,7 +339,7 @@ export function ProductForm({ product, demo, onClose, onSaved, canPublish = true
         ))}
         <button
           type="button"
-          onClick={() => set("variants", [...form.variants, { ...blankVariant("#d9b9a0"), code: "" }])}
+          onClick={() => set("variants", [...form.variants, { ...blankVariant("#d9b9a0", form.audiences ?? []), code: "" }])}
           className="btn w-full border border-dashed border-ink/40 bg-white text-ink-soft"
         >
           + Agregar otro color

@@ -31,7 +31,9 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 // v2: cada renglón guarda su color (variantId). Las bolsas v1 no tenían color y se descartan.
-const STORAGE_KEY = "femshoes-cart-v2";
+const STORAGE_KEY = "chuzchuz-cart-v2";
+// Clave anterior (FemShoes): se lee una vez para no perder bolsas en curso
+const OLD_STORAGE_KEY = "femshoes-cart-v2";
 
 /** Identifica un renglón de la bolsa: modelo + color + talla. */
 export const lineKey = (i: Pick<CartItem, "productId" | "variantId" | "size">) => `${i.productId}|${i.variantId}|${i.size}`;
@@ -44,7 +46,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Cargar el carrito guardado en este teléfono
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(OLD_STORAGE_KEY);
+      localStorage.removeItem(OLD_STORAGE_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setItems((JSON.parse(saved) as CartItem[]).filter((i) => i.variantId));
     } catch {}

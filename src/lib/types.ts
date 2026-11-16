@@ -1,4 +1,4 @@
-import type { CategorySlug } from "./config";
+import { isAudience, type Audience, type CategorySlug } from "./config";
 import { slugify } from "./format";
 
 export type SizeStock = { size: number; stock: number };
@@ -26,6 +26,7 @@ export type ProductInput = {
   variants: ProductVariant[];
   sharedImages: string[]; // fotos generales del modelo: se muestran con todos los colores
   coverImage?: string | null; // foto de portada del modelo (catálogo, inicio), aparte de las de cada color
+  audiences?: Audience[]; // público: mujeres, hombres, niñas, niños (uno o varios)
   featured: boolean;
   isNew: boolean;
   active: boolean;
@@ -60,6 +61,7 @@ export type ProductRow = {
   variants?: ProductVariant[] | null;
   shared_images?: string[] | null;
   cover_image?: string | null;
+  audiences?: string[] | null;
   featured: boolean;
   is_new: boolean;
   active: boolean;
@@ -117,7 +119,8 @@ export function withSummary(p: ProductInput & { id: string; code?: string }): Pr
   const variants = p.variants.map(cleanVariant);
   const sharedImages = (p.sharedImages ?? []).filter(Boolean);
   const coverImage = p.coverImage || null;
-  return { ...p, variants, sharedImages, coverImage, ...summarize(variants, sharedImages, coverImage) };
+  const audiences = (p.audiences ?? []).filter(isAudience);
+  return { ...p, variants, sharedImages, coverImage, audiences, ...summarize(variants, sharedImages, coverImage) };
 }
 
 export function fromRow(r: ProductRow): Product {
@@ -137,6 +140,7 @@ export function fromRow(r: ProductRow): Product {
     variants,
     sharedImages: r.shared_images ?? [],
     coverImage: r.cover_image ?? null,
+    audiences: (r.audiences ?? []).filter(isAudience),
     featured: r.featured,
     isNew: r.is_new,
     active: r.active,
@@ -160,6 +164,7 @@ export function toRow(p: ProductInput): Omit<ProductRow, "id" | "code"> {
     variants,
     shared_images: sharedImages,
     cover_image: coverImage,
+    audiences: [...new Set((p.audiences ?? []).filter(isAudience))],
     // Columnas resumidas: se mantienen para búsquedas y compatibilidad
     colors,
     sizes,
