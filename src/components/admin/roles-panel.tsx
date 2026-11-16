@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { deleteRole, listRoles, saveRole } from "@/app/admin/actions";
-import { permissionGroups, permissionLabel, type Permission, type RoleDef } from "@/lib/roles";
+import { permissionGroups, permissionLabel, permissionRequires, type Permission, type RoleDef } from "@/lib/roles";
 import { getSupabase } from "@/lib/supabase";
 
 async function getToken() {
@@ -148,8 +148,15 @@ function RoleEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Marcar un permiso marca también el que necesita; desmarcar uno quita los que dependen de él
   const toggle = (p: Permission, on: boolean) =>
-    setPerms((cur) => (on ? [...new Set([...cur, p])] : cur.filter((x) => x !== p)));
+    setPerms((cur) => {
+      if (on) {
+        const need = permissionRequires[p];
+        return [...new Set([...cur, p, ...(need ? [need] : [])])];
+      }
+      return cur.filter((x) => x !== p && permissionRequires[x] !== p);
+    });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

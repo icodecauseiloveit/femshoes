@@ -53,7 +53,7 @@ export function CustomersPanel({
 }: {
   openId: string | null;
   onOpen: (id: string | null) => void;
-  /** Solo superadmin: eliminar clientas */
+  /** Permiso "Eliminar clientas" (por defecto solo superadmin) */
   canDelete?: boolean;
 }) {
   const [deletedNotice, setDeletedNotice] = useState("");

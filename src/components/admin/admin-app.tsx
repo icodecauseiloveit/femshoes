@@ -318,7 +318,7 @@ function Dashboard({ email }: { email: string }) {
       {current?.id === "productos" && <ProductsPanel access={access} />}
       {current?.id === "categorias" && <CategoriesPanel />}
       {current?.id === "pedidos" && <OrdersPanel canManage={can(access, "pedidos")} canDelete={access.superadmin} onOpenCustomer={can(access, "clientas") ? openCustomer : undefined} />}
-      {current?.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} canDelete={access.superadmin} />}
+      {current?.id === "clientes" && <CustomersPanel openId={customerId} onOpen={setCustomerId} canDelete={can(access, "clientas_eliminar")} />}
       {current?.id === "cartera" && <ReceivablesPanel onOpenCustomer={openCustomer} />}
       {current?.id === "usuarios" && <StaffPanel myEmail={myEmail} />}
       {current?.id === "roles" && <RolesPanel />}
